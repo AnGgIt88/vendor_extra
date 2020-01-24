@@ -34,6 +34,11 @@ PRODUCT_COPY_FILES += \
     vendor/extra/config/permissions/googlewallpaper-hiddenapi-package-whitelist.xml:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/sysconfig/googlewallpaper-hiddenapi-package-whitelist.xml \
     vendor/extra/config/permissions/privapp-permissions-googlewallpaper.xml:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/permissions/privapp-permissions-googlewallpaper.xml
 
+# Offline charger
+PRODUCT_PACKAGES += \
+    charger_res_images \
+    product_charger_res_images
+
 # Overlays
 PRODUCT_ENFORCE_RRO_EXCLUDED_OVERLAYS += \
     vendor/extra/overlay/common
