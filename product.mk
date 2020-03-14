@@ -6,6 +6,16 @@ include $(call all-subdir-makefiles,$(LOCAL_PATH))
 PRODUCT_COPY_FILES += \
     vendor/extra/config/apns-conf.xml:$(TARGET_COPY_OUT_PRODUCT)/etc/apns-conf.xml
 
+# Blurs
+# Enable blurs, hidden under dev option
+PRODUCT_PRODUCT_PROPERTIES += \
+    ro.surface_flinger.supports_background_blur=1 \
+    persist.sys.sf.disable_blurs=1
+
+# Hint expensive blurs for device with larger display
+PRODUCT_PRODUCT_PROPERTIES += \
+    ro.sf.blurs_are_expensive=1
+
 # Face Unlock
 PRODUCT_PACKAGES += \
     FaceUnlockService
