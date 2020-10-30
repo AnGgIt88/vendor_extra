@@ -23,6 +23,9 @@ PRODUCT_COPY_FILES += \
 PRODUCT_PACKAGES += \
     Flipendo
 
+BOARD_PLAT_PRIVATE_SEPOLICY_DIR += \
+    vendor/extra/sepolicy/private
+
 # Google Wallpaper
 PRODUCT_PACKAGES += \
     WallpaperPickerGoogleRelease
