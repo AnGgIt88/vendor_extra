@@ -1,0 +1,6 @@
+[submodule "external/faceunlock"]
+	path = external/faceunlock
+	url = https://gitlab.pixelexperience.org/android/external_faceunlock
+[submodule "packages/apps/FaceUnlockService"]
+	path = packages/apps/FaceUnlockService
+	url = https://github.com/PixelExperience/packages_apps_FaceUnlockService
