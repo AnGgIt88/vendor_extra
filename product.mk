@@ -44,4 +44,9 @@ PRODUCT_ENFORCE_RRO_EXCLUDED_OVERLAYS += \
     vendor/extra/overlay/common
 
 DEVICE_PACKAGE_OVERLAYS += \
-    vendor/extra/overlay/common
+    vendor/extra/overlay/common \
+    vendor/extra/overlay/device
+
+# QTI-Telephony Jar
+PRODUCT_COPY_FILES += \
+    vendor/extra/proprietary/system_ext/framework/qti-telephony-common.jar:$(TARGET_COPY_OUT_SYSTEM_EXT)/framework/qti-telephony-common.jar
