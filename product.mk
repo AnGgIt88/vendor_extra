@@ -18,7 +18,7 @@ PRODUCT_COPY_FILES += \
 
 # Flipendo
 PRODUCT_COPY_FILES += \
-    vendor/extra/config/sysconfig/pixel_experience_2020.xml:$(TARGET_COPY_OUT_PRODUCT)/etc/sysconfig/pixel_experience_2020.xml
+    vendor/extra/config/sysconfig/flipendo-sysconfig.xml:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/sysconfig/flipendo-sysconfig.xml
 
 PRODUCT_PACKAGES += \
     Flipendo
