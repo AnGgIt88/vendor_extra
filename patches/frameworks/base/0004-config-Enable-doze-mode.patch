@@ -1,0 +1,31 @@
+From 57732fef7f26ba53bddb984f8b43137b00b6db2b Mon Sep 17 00:00:00 2001
+From: Danny Lin <danny@kdrag0n.dev>
+Date: Fri, 18 Sep 2020 09:08:19 -0700
+Subject: [PATCH 04/23] config: Enable doze mode
+
+Modern apps without GMS push can handle doze by asking the user to
+whitelist them from battery optimization, so there's no reason to not
+enable this.
+
+Change-Id: If040face689784a61a85462cbb6a99aa30bf4949
+Signed-off-by: DennySPb <dennyspb@gmail.com>
+---
+ core/res/res/values/config.xml | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/core/res/res/values/config.xml b/core/res/res/values/config.xml
+index b61b26a0e7f..fecefa7bd2f 100644
+--- a/core/res/res/values/config.xml
++++ b/core/res/res/values/config.xml
+@@ -245,7 +245,7 @@
+          dozing).  This should be enabled if you have such services and expect apps to
+          correctly use them when installed on your device.  Otherwise, keep this disabled
+          so that applications can still use their own mechanisms. -->
+-    <bool name="config_enableAutoPowerModes">false</bool>
++    <bool name="config_enableAutoPowerModes">true</bool>
+ 
+     <!-- Whether (if true) this is a kind of device that can be moved around (eg. phone/laptop),
+          or (if false) something for which movement is either not measurable or should not count
+-- 
+2.31.1.606.gdf6c4f722c
+

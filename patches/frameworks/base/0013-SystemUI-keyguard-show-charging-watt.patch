@@ -1,0 +1,39 @@
+From e0f3dd533573772b2aeef8d16a985d55acc0b160 Mon Sep 17 00:00:00 2001
+From: maxwen <max.weninger@gmail.com>
+Date: Wed, 13 Feb 2019 00:13:00 +0100
+Subject: [PATCH 13/23] SystemUI: keyguard show charging watt
+
+Signed-off-by: DennySPB <dennyspb@gmail.com>
+Change-Id: Ib3ea530b324d786dc5dc4fe80e68fcff2a076680
+Signed-off-by: DennySPb <dennyspb@gmail.com>
+---
+ .../systemui/statusbar/KeyguardIndicationController.java    | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/KeyguardIndicationController.java b/packages/SystemUI/src/com/android/systemui/statusbar/KeyguardIndicationController.java
+index e1d25d2d562..6b6764ccd4e 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/KeyguardIndicationController.java
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/KeyguardIndicationController.java
+@@ -122,7 +122,7 @@ public class KeyguardIndicationController implements StateListener,
+     private boolean mBatteryOverheated;
+     private boolean mEnableBatteryDefender;
+     private int mChargingSpeed;
+-    private int mChargingWattage;
++    private double mChargingWattage;
+     private int mBatteryLevel;
+     private long mChargingTimeRemaining;
+     private float mDisclosureMaxAlpha;
+@@ -567,6 +567,10 @@ public class KeyguardIndicationController implements StateListener,
+             if (mChargingCurrent > 0) {
+                 batteryInfo = batteryInfo + (mChargingCurrent / 1000) + "mA";
+             }
++            if (mChargingWattage > 0) {
++                batteryInfo = (batteryInfo == "" ? "" : batteryInfo + " · ") +
++                        String.format("%.1f" , (mChargingWattage / 1000 / 1000)) + "W";
++            }
+             if (mChargingVoltage > 0) {
+                 batteryInfo = (batteryInfo == "" ? "" : batteryInfo + " · ") +
+                         String.format("%.1f", (float) (mChargingVoltage / 1000 / 1000)) + "V";
+-- 
+2.31.1.606.gdf6c4f722c
+

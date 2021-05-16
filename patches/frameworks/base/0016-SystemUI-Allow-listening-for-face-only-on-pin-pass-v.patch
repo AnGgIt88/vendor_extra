@@ -1,0 +1,165 @@
+From 4653ad928a8043b0b6c30fe903b9a95c0d681ead Mon Sep 17 00:00:00 2001
+From: jhenrique09 <jhenrique09.mcz@hotmail.com>
+Date: Sat, 28 Mar 2020 12:51:07 -0300
+Subject: [PATCH 16/23] SystemUI: Allow listening for face only on pin/pass
+ view
+
+Useful for devices with popup camera
+
+Change-Id: Ifba770dd1681858844d5d0290cbf385bfa47f841
+---
+ core/res/res/values/lineage_config.xml        |  3 +++
+ core/res/res/values/lineage_symbols.xml       |  3 +++
+ .../keyguard/KeyguardUpdateMonitor.java       | 24 +++++++++++++++++--
+ .../phone/StatusBarKeyguardViewManager.java   |  6 +++++
+ 4 files changed, 34 insertions(+), 2 deletions(-)
+
+diff --git a/core/res/res/values/lineage_config.xml b/core/res/res/values/lineage_config.xml
+index 4b090379f5a..b92cd059433 100644
+--- a/core/res/res/values/lineage_config.xml
++++ b/core/res/res/values/lineage_config.xml
+@@ -34,4 +34,7 @@
+     <!-- The list of components which should be forced to be enabled. -->
+     <string-array name="config_forceEnabledComponents" translatable="false">
+     </string-array>
++
++    <!-- Enable face auth only when swiping security view -->
++    <bool name="config_faceAuthOnlyOnSecurityView">false</bool>
+ </resources>
+diff --git a/core/res/res/values/lineage_symbols.xml b/core/res/res/values/lineage_symbols.xml
+index 155da4479fb..b135079cec0 100644
+--- a/core/res/res/values/lineage_symbols.xml
++++ b/core/res/res/values/lineage_symbols.xml
+@@ -25,4 +25,7 @@
+     <java-symbol type="array" name="config_deviceDisabledComponents" />
+     <java-symbol type="array" name="config_globallyDisabledComponents" />
+     <java-symbol type="array" name="config_forceEnabledComponents" />
++
++    <!-- Enable face auth only when swiping security view -->
++    <java-symbol type="bool" name="config_faceAuthOnlyOnSecurityView" />
+ </resources>
+diff --git a/packages/SystemUI/src/com/android/keyguard/KeyguardUpdateMonitor.java b/packages/SystemUI/src/com/android/keyguard/KeyguardUpdateMonitor.java
+index 67a59608d97..5837c6095d3 100644
+--- a/packages/SystemUI/src/com/android/keyguard/KeyguardUpdateMonitor.java
++++ b/packages/SystemUI/src/com/android/keyguard/KeyguardUpdateMonitor.java
+@@ -288,6 +288,8 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener, Dumpab
+     private final Executor mBackgroundExecutor;
+ 
+     private final boolean mFingerprintWakeAndUnlock;
++    private final boolean mFaceAuthOnlyOnSecurityView;
++    private boolean mBouncerFullyShown;
+ 
+     // Face unlock
+     private static final boolean mCustomFaceUnlockSupported = FaceUnlockUtils.isFaceUnlockSupported();
+@@ -912,7 +914,7 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener, Dumpab
+     }
+ 
+     private void handleFaceLockoutReset() {
+-        updateFaceListeningState();
++        mHandler.postDelayed(this::updateFaceListeningState, 1000);
+     }
+ 
+     private void setFaceRunningState(int faceRunningState) {
+@@ -1586,6 +1588,8 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener, Dumpab
+         mStrongAuthTracker = new StrongAuthTracker(context, this::notifyStrongAuthStateChanged);
+         mFingerprintWakeAndUnlock = mContext.getResources().getBoolean(
+                 com.android.systemui.R.bool.config_fingerprintWakeAndUnlock);
++        mFaceAuthOnlyOnSecurityView = mContext.getResources().getBoolean(
++                com.android.internal.R.bool.config_faceAuthOnlyOnSecurityView);
+         mBackgroundExecutor = backgroundExecutor;
+         mBroadcastDispatcher = broadcastDispatcher;
+         mRingerModeTracker = ringerModeTracker;
+@@ -2005,7 +2009,7 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener, Dumpab
+ 
+         // Only listen if this KeyguardUpdateMonitor belongs to the primary user. There is an
+         // instance of KeyguardUpdateMonitor for each user but KeyguardUpdateMonitor is user-aware.
+-        final boolean shouldListen =
++        boolean shouldListen =
+                 (mBouncer || mAuthInterruptActive || awakeKeyguard
+                         || shouldListenForFaceAssistant())
+                 && !mSwitchingUser && !isFaceDisabled(user) && becauseCannotSkipBouncer
+@@ -2013,6 +2017,10 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener, Dumpab
+                 && strongAuthAllowsScanning && mIsPrimaryUser
+                 && !mSecureCameraLaunched;
+ 
++        if (shouldListen && mFaceAuthOnlyOnSecurityView && !mBouncerFullyShown){
++            shouldListen = false;
++        }
++
+         // Aggregate relevant fields for debug logging.
+         if (DEBUG_FACE || DEBUG_SPEW) {
+             final KeyguardFaceListenModel model = new KeyguardFaceListenModel(
+@@ -2038,6 +2046,15 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener, Dumpab
+         return shouldListen;
+     }
+ 
++    public void onKeyguardBouncerFullyShown(boolean fullyShow) {
++        if (mBouncerFullyShown != fullyShow){
++            mBouncerFullyShown = fullyShow;
++            if (mFaceAuthOnlyOnSecurityView){
++                updateFaceListeningState();
++            }
++        }
++    }
++
+     private void maybeLogFaceListenerModelData(KeyguardFaceListenModel model) {
+         // Too chatty, but very useful when debugging issues.
+         if (DEBUG_SPEW) {
+@@ -2498,6 +2515,7 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener, Dumpab
+         Assert.isMainThread();
+         Log.d(TAG, "onKeyguardVisibilityChanged(" + showing + ")");
+         mKeyguardIsVisible = showing;
++        mBouncerFullyShown = false;
+ 
+         if (showing) {
+             mSecureCameraLaunched = false;
+@@ -2517,6 +2535,7 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener, Dumpab
+      */
+     private void handleKeyguardReset() {
+         if (DEBUG) Log.d(TAG, "handleKeyguardReset");
++        mBouncerFullyShown = false;
+         updateBiometricListeningState();
+         mNeedsSlowUnlockTransition = resolveNeedsSlowUnlockTransition();
+     }
+@@ -2574,6 +2593,7 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener, Dumpab
+      * Handle {@link #MSG_REPORT_EMERGENCY_CALL_ACTION}
+      */
+     private void handleReportEmergencyCallAction() {
++        mBouncerFullyShown = false;
+         Assert.isMainThread();
+         for (int i = 0; i < mCallbacks.size(); i++) {
+             KeyguardUpdateMonitorCallback cb = mCallbacks.get(i).get();
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusBarKeyguardViewManager.java b/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusBarKeyguardViewManager.java
+index 68b83fb68d5..d2138e1d70c 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusBarKeyguardViewManager.java
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusBarKeyguardViewManager.java
+@@ -106,6 +106,7 @@ public class StatusBarKeyguardViewManager implements RemoteInputController.Callb
+         public void onFullyShown() {
+             updateStates();
+             updateLockIcon();
++            onKeyguardBouncerFullyShownChanged(true);
+         }
+ 
+         @Override
+@@ -123,6 +124,7 @@ public class StatusBarKeyguardViewManager implements RemoteInputController.Callb
+         public void onFullyHidden() {
+             updateStates();
+             updateLockIcon();
++            onKeyguardBouncerFullyShownChanged(false);
+         }
+     };
+     private final DockManager.DockEventListener mDockEventListener =
+@@ -805,6 +807,10 @@ public class StatusBarKeyguardViewManager implements RemoteInputController.Callb
+         }
+     };
+ 
++    private void onKeyguardBouncerFullyShownChanged(boolean fullyShown){
++        mKeyguardUpdateManager.onKeyguardBouncerFullyShown(fullyShown);
++    }
++
+     protected void updateStates() {
+         int vis = mContainer.getSystemUiVisibility();
+         boolean showing = mShowing;
+-- 
+2.31.1.606.gdf6c4f722c
+

@@ -1,0 +1,48 @@
+From 2fb9f062ffc876d27cbc2947065f429d6a8d3a97 Mon Sep 17 00:00:00 2001
+From: Lucchetto <lucchetto.tie@live.com>
+Date: Wed, 11 Dec 2019 19:48:13 +0100
+Subject: [PATCH 12/23] Lockscreen charging info: show decimal in battery
+ temperature
+
+Change-Id: I10bbe4df988387c401802475697452796e0afb6d
+Signed-off-by: Lucchetto <lucchetto.tie@live.com>
+Signed-off-by: DennySPb <dennyspb@gmail.com>
+---
+ .../src/com/android/settingslib/fuelgauge/BatteryStatus.java  | 4 ++--
+ .../systemui/statusbar/KeyguardIndicationController.java      | 2 +-
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/packages/SettingsLib/src/com/android/settingslib/fuelgauge/BatteryStatus.java b/packages/SettingsLib/src/com/android/settingslib/fuelgauge/BatteryStatus.java
+index 9834063f84f..97e49224446 100644
+--- a/packages/SettingsLib/src/com/android/settingslib/fuelgauge/BatteryStatus.java
++++ b/packages/SettingsLib/src/com/android/settingslib/fuelgauge/BatteryStatus.java
+@@ -53,11 +53,11 @@ public class BatteryStatus {
+     public final int maxChargingCurrent;
+     public final int maxChargingVoltage;
+     public final int maxChargingWattage;
+-    public final int temperature;
++    public final float temperature;
+ 
+     public BatteryStatus(int status, int level, int plugged, int health,
+             int maxChargingCurrent, int maxChargingVoltage,
+-            int maxChargingWattage, int temperature) {
++            int maxChargingWattage, float temperature) {
+         this.status = status;
+         this.level = level;
+         this.plugged = plugged;
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/KeyguardIndicationController.java b/packages/SystemUI/src/com/android/systemui/statusbar/KeyguardIndicationController.java
+index 891b1a5759b..e1d25d2d562 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/KeyguardIndicationController.java
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/KeyguardIndicationController.java
+@@ -128,7 +128,7 @@ public class KeyguardIndicationController implements StateListener,
+     private float mDisclosureMaxAlpha;
+     private int mChargingCurrent;
+     private double mChargingVoltage;
+-    private int mTemperature;
++    private float mTemperature;
+     private String mMessageToShowOnScreenOn;
+ 
+     private KeyguardUpdateMonitorCallback mUpdateMonitorCallback;
+-- 
+2.31.1.606.gdf6c4f722c
+

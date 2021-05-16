@@ -1,0 +1,246 @@
+From eb4bd6f984076e0774fb742d916cceedd7aece6b Mon Sep 17 00:00:00 2001
+From: Pulkit077 <pulkitagarwal2k1@gmail.com>
+Date: Wed, 6 Jan 2021 08:29:58 +0530
+Subject: [PATCH 4/4] Revert "Updater: Add setting for updating recovery"
+
+This reverts commit 96626c2fde90aef7a8d87368f0457ff349adfab8.
+
+Change-Id: I66f74a88fe4493c21622638d982b9ad3ea92f8dc
+---
+ res/layout/preferences_dialog.xml             |  8 ----
+ res/values/config.xml                         | 19 ---------
+ res/values/strings.xml                        |  4 +-
+ res/values/symbols.xml                        | 19 ---------
+ .../lineageos/updater/UpdatesActivity.java    | 40 +------------------
+ src/org/lineageos/updater/misc/Constants.java |  6 +--
+ src/org/lineageos/updater/misc/Utils.java     |  4 --
+ 7 files changed, 3 insertions(+), 97 deletions(-)
+ delete mode 100644 res/values/config.xml
+ delete mode 100644 res/values/symbols.xml
+
+diff --git a/res/layout/preferences_dialog.xml b/res/layout/preferences_dialog.xml
+index d78f873..e30c117 100644
+--- a/res/layout/preferences_dialog.xml
++++ b/res/layout/preferences_dialog.xml
+@@ -52,12 +52,4 @@
+         android:layout_marginBottom="16dp"
+         android:text="@string/menu_ab_perf_mode"
+         android:textSize="16sp" />
+-
+-    <Switch
+-        android:id="@+id/preferences_update_recovery"
+-        android:layout_width="match_parent"
+-        android:layout_height="wrap_content"
+-        android:layout_marginBottom="16dp"
+-        android:text="@string/menu_update_recovery"
+-        android:textSize="16sp" />
+ </LinearLayout>
+diff --git a/res/values/config.xml b/res/values/config.xml
+deleted file mode 100644
+index 76ab686..0000000
+--- a/res/values/config.xml
++++ /dev/null
+@@ -1,19 +0,0 @@
+-<?xml version="1.0" encoding="utf-8"?>
+-<!--
+-     Copyright (C) 2020 The LineageOS Project
+-
+-     Licensed under the Apache License, Version 2.0 (the "License");
+-     you may not use this file except in compliance with the License.
+-     You may obtain a copy of the License at
+-
+-          http://www.apache.org/licenses/LICENSE-2.0
+-
+-     Unless required by applicable law or agreed to in writing, software
+-     distributed under the License is distributed on an "AS IS" BASIS,
+-     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-     See the License for the specific language governing permissions and
+-     limitations under the License.
+--->
+-<resources>
+-    <bool name="config_hideRecoveryUpdate">false</bool>
+-</resources>
+diff --git a/res/values/strings.xml b/res/values/strings.xml
+index 888a858..bd0c0d8 100644
+--- a/res/values/strings.xml
++++ b/res/values/strings.xml
+@@ -1,6 +1,6 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <!--
+-     Copyright (C) 2017-2020 The LineageOS Project
++     Copyright (C) 2017 The LineageOS Project
+ 
+      Licensed under the Apache License, Version 2.0 (the "License");
+      you may not use this file except in compliance with the License.
+@@ -77,8 +77,6 @@
+     <string name="menu_show_changelog">Show changelog</string>
+     <string name="menu_changelog_url" translatable="false">https://raw.githubusercontent.com/Pulkit077/OTA/lineage-18.1/changelog.txt</string>
+     <string name="menu_ab_perf_mode">Prioritize update process</string>
+-    <string name="menu_update_recovery">Update recovery</string>
+-    <string name="toast_forced_update_recovery">You cannot disable the update of Lineage Recovery on this device.</string>
+ 
+     <string name="snack_updates_found">New updates found</string>
+     <string name="snack_no_updates_found">No new updates found</string>
+diff --git a/res/values/symbols.xml b/res/values/symbols.xml
+deleted file mode 100644
+index f3dc0ba..0000000
+--- a/res/values/symbols.xml
++++ /dev/null
+@@ -1,19 +0,0 @@
+-<?xml version="1.0" encoding="utf-8"?>
+-<!--
+-     Copyright (C) 2020 The LineageOS Project
+-
+-     Licensed under the Apache License, Version 2.0 (the "License");
+-     you may not use this file except in compliance with the License.
+-     You may obtain a copy of the License at
+-
+-          http://www.apache.org/licenses/LICENSE-2.0
+-
+-     Unless required by applicable law or agreed to in writing, software
+-     distributed under the License is distributed on an "AS IS" BASIS,
+-     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-     See the License for the specific language governing permissions and
+-     limitations under the License.
+--->
+-<resources>
+-    <java-symbol type="bool" name="config_hideRecoveryUpdate" />
+-</resources>
+diff --git a/src/org/lineageos/updater/UpdatesActivity.java b/src/org/lineageos/updater/UpdatesActivity.java
+index df9a8fd..ad001c8 100644
+--- a/src/org/lineageos/updater/UpdatesActivity.java
++++ b/src/org/lineageos/updater/UpdatesActivity.java
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (C) 2017-2020 The LineageOS Project
++ * Copyright (C) 2017 The LineageOS Project
+  *
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+@@ -27,12 +27,10 @@ import android.net.Uri;
+ import android.os.Build;
+ import android.os.Bundle;
+ import android.os.IBinder;
+-import android.os.SystemProperties;
+ import android.util.Log;
+ import android.view.LayoutInflater;
+ import android.view.Menu;
+ import android.view.MenuItem;
+-import android.view.MotionEvent;
+ import android.view.View;
+ import android.view.animation.Animation;
+ import android.view.animation.LinearInterpolator;
+@@ -40,7 +38,6 @@ import android.view.animation.RotateAnimation;
+ import android.widget.Spinner;
+ import android.widget.Switch;
+ import android.widget.TextView;
+-import android.widget.Toast;
+ 
+ import androidx.appcompat.app.AlertDialog;
+ import androidx.appcompat.widget.Toolbar;
+@@ -417,7 +414,6 @@ public class UpdatesActivity extends UpdatesListActivity {
+         Switch autoDelete = view.findViewById(R.id.preferences_auto_delete_updates);
+         Switch dataWarning = view.findViewById(R.id.preferences_mobile_data_warning);
+         Switch abPerfMode = view.findViewById(R.id.preferences_ab_perf_mode);
+-        Switch updateRecovery = view.findViewById(R.id.preferences_update_recovery);
+ 
+         if (!Utils.isABDevice()) {
+             abPerfMode.setVisibility(View.GONE);
+@@ -429,33 +425,6 @@ public class UpdatesActivity extends UpdatesListActivity {
+         dataWarning.setChecked(prefs.getBoolean(Constants.PREF_MOBILE_DATA_WARNING, true));
+         abPerfMode.setChecked(prefs.getBoolean(Constants.PREF_AB_PERF_MODE, false));
+ 
+-        if (getResources().getBoolean(R.bool.config_hideRecoveryUpdate)) {
+-            // Hide the update feature if explicitely requested.
+-            // Might be the case of A-only devices using prebuilt vendor images.
+-            updateRecovery.setVisibility(View.GONE);
+-        } else if (Utils.isRecoveryUpdateExecPresent()) {
+-            updateRecovery.setChecked(prefs.getBoolean(Constants.PREF_UPDATE_RECOVERY, false));
+-        } else {
+-            // There is no recovery updater script in the device, so the feature is considered
+-            // forcefully enabled, just to avoid users to be confused and complain that
+-            // recovery gets overwritten. That's the case of A/B and recovery-in-boot devices.
+-            updateRecovery.setChecked(true);
+-            updateRecovery.setOnTouchListener(new View.OnTouchListener() {
+-                private Toast forcedUpdateToast = null;
+-
+-                @Override
+-                public boolean onTouch(View v, MotionEvent event) {
+-                    if (forcedUpdateToast != null) {
+-                        forcedUpdateToast.cancel();
+-                    }
+-                    forcedUpdateToast = Toast.makeText(getApplicationContext(),
+-                            getString(R.string.toast_forced_update_recovery), Toast.LENGTH_SHORT);
+-                    forcedUpdateToast.show();
+-                    return true;
+-                }
+-            });
+-        }
+-
+         new AlertDialog.Builder(this)
+                 .setTitle(R.string.menu_preferences)
+                 .setView(view)
+@@ -469,8 +438,6 @@ public class UpdatesActivity extends UpdatesListActivity {
+                                     dataWarning.isChecked())
+                             .putBoolean(Constants.PREF_AB_PERF_MODE,
+                                     abPerfMode.isChecked())
+-                            .putBoolean(Constants.PREF_UPDATE_RECOVERY,
+-                                    updateRecovery.isChecked())
+                             .apply();
+ 
+                     if (Utils.isUpdateCheckEnabled(this)) {
+@@ -484,11 +451,6 @@ public class UpdatesActivity extends UpdatesListActivity {
+                         boolean enableABPerfMode = abPerfMode.isChecked();
+                         mUpdaterService.getUpdaterController().setPerformanceMode(enableABPerfMode);
+                     }
+-                    if (Utils.isRecoveryUpdateExecPresent()) {
+-                        boolean enableRecoveryUpdate = updateRecovery.isChecked();
+-                        SystemProperties.set(Constants.UPDATE_RECOVERY_PROPERTY,
+-                                String.valueOf(enableRecoveryUpdate));
+-                    }
+                 })
+                 .show();
+     }
+diff --git a/src/org/lineageos/updater/misc/Constants.java b/src/org/lineageos/updater/misc/Constants.java
+index 5e1cc8b..81e7c1a 100644
+--- a/src/org/lineageos/updater/misc/Constants.java
++++ b/src/org/lineageos/updater/misc/Constants.java
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (C) 2017-2020 The LineageOS Project
++ * Copyright (C) 2017 The LineageOS Project
+  *
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+@@ -34,7 +34,6 @@ public final class Constants {
+     public static final String PREF_AB_PERF_MODE = "ab_perf_mode";
+     public static final String PREF_MOBILE_DATA_WARNING = "pref_mobile_data_warning";
+     public static final String PREF_NEEDS_REBOOT_ID = "needs_reboot_id";
+-    public static final String PREF_UPDATE_RECOVERY = "update_recovery";
+ 
+     public static final String UNCRYPT_FILE_EXT = ".uncrypt";
+ 
+@@ -53,7 +52,4 @@ public final class Constants {
+     public static final String PREF_INSTALL_PACKAGE_PATH = "install_package_path";
+     public static final String PREF_INSTALL_AGAIN = "install_again";
+     public static final String PREF_INSTALL_NOTIFIED = "install_notified";
+-
+-    public static final String UPDATE_RECOVERY_EXEC = "/vendor/bin/install-recovery.sh";
+-    public static final String UPDATE_RECOVERY_PROPERTY = "persist.vendor.recovery_update";
+ }
+diff --git a/src/org/lineageos/updater/misc/Utils.java b/src/org/lineageos/updater/misc/Utils.java
+index e61604e..0b7ab28 100644
+--- a/src/org/lineageos/updater/misc/Utils.java
++++ b/src/org/lineageos/updater/misc/Utils.java
+@@ -399,8 +399,4 @@ public class Utils {
+                 return AlarmManager.INTERVAL_DAY * 30;
+         }
+     }
+-
+-    public static boolean isRecoveryUpdateExecPresent() {
+-        return new File(Constants.UPDATE_RECOVERY_EXEC).exists();
+-    }
+ }
+-- 
+2.31.1.606.gdf6c4f722c
+

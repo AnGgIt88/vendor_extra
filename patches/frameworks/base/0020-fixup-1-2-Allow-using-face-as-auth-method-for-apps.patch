@@ -1,0 +1,26 @@
+From 9c6f9d3879ba6432cb1ce943c43a65435850e0e6 Mon Sep 17 00:00:00 2001
+From: jhenrique09 <jhenrique09.mcz@hotmail.com>
+Date: Sun, 7 Mar 2021 17:16:03 -0300
+Subject: [PATCH 20/23] fixup - [1/2] Allow using face as auth method for apps
+
+Change-Id: If9fd734b93fc2a507d41984d1997ddbabf26f3ec
+---
+ .../java/com/android/server/biometrics/BiometricService.java    | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/biometrics/BiometricService.java b/services/core/java/com/android/server/biometrics/BiometricService.java
+index 58d2b3aead3..f8883385e5c 100644
+--- a/services/core/java/com/android/server/biometrics/BiometricService.java
++++ b/services/core/java/com/android/server/biometrics/BiometricService.java
+@@ -1684,7 +1684,7 @@ public class BiometricService extends SystemService {
+             for (AuthenticatorWrapper authenticator : mAuthenticators) {
+                 // TODO(b/141025588): use ids instead of modalities to avoid ambiguity.
+                 if (authenticator.modality == TYPE_FACE) {
+-                    authenticator.impl.prepareForAuthentication(requireConfirmation,
++                    authenticator.impl.prepareForAuthentication(true,
+                             authSession.mToken, authSession.mSessionId, authSession.mUserId,
+                             mInternalReceiver, authSession.mOpPackageName, cookie,
+                             authSession.mCallingUid, authSession.mCallingPid,
+-- 
+2.31.1.606.gdf6c4f722c
+

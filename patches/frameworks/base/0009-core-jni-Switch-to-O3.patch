@@ -1,0 +1,40 @@
+From 158204b2e751efdfc8bf77cbeecd127226d8460b Mon Sep 17 00:00:00 2001
+From: Simao Gomes Viana <xdevs23@outlook.com>
+Date: Sat, 26 May 2018 10:58:21 +0200
+Subject: [PATCH 09/23] core: jni: Switch to -O3
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Change-Id: I5db0598b3bf9b353fffa6493a42da43d02aa287a
+Signed-off-by: Simão Gomes Viana <devel@superboring.dev>
+Signed-off-by: Joey Huab <joey@evolution-x.org>
+Signed-off-by: DennySPb <dennyspb@gmail.com>
+---
+ core/jni/Android.bp | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/core/jni/Android.bp b/core/jni/Android.bp
+index 0797b18f12d..c6b5f1287e2 100644
+--- a/core/jni/Android.bp
++++ b/core/jni/Android.bp
+@@ -3,6 +3,7 @@ cc_library_shared {
+     name: "libandroid_runtime",
+     host_supported: true,
+     cflags: [
++        "-O3",
+         "-Wno-unused-parameter",
+         "-Wno-non-virtual-dtor",
+         "-Wno-maybe-uninitialized",
+@@ -20,7 +21,7 @@ cc_library_shared {
+         "-Wunreachable-code",
+     ],
+ 
+-    cppflags: ["-Wno-conversion-null"],
++    cppflags: ["-Wno-conversion-null", "-O3"],
+ 
+     srcs: [
+         "android_animation_PropertyValuesHolder.cpp",
+-- 
+2.31.1.606.gdf6c4f722c
+

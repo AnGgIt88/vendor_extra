@@ -1,0 +1,125 @@
+From 435234ada55ee672d2ecc6b6b3751332e3495ca5 Mon Sep 17 00:00:00 2001
+From: Pulkit077 <pulkitagarwal2k1@gmail.com>
+Date: Mon, 22 Jun 2020 10:42:46 +0530
+Subject: [PATCH] config: remove some packages
+
+Signed-off-by: Pulkit077 <pulkitagarwal2k1@gmail.com>
+Change-Id: Id8c5ea26531be887869b55013f96c63aa08a7b71
+---
+ config/common.mk        | 34 ----------------------------------
+ config/common_full.mk   |  4 ----
+ config/common_mobile.mk |  6 +-----
+ config/telephony.mk     |  4 ----
+ 4 files changed, 1 insertion(+), 47 deletions(-)
+
+diff --git a/config/common.mk b/config/common.mk
+index 9de9de4c..8532e053 100644
+--- a/config/common.mk
++++ b/config/common.mk
+@@ -111,7 +111,6 @@ PRODUCT_PACKAGES += \
+ PRODUCT_PACKAGES += \
+     LineageParts \
+     LineageSettingsProvider \
+-    LineageSetupWizard \
+     Updater
+ 
+ # Themes
+@@ -123,25 +122,6 @@ PRODUCT_PACKAGES += \
+ PRODUCT_PACKAGES += \
+     SimpleDeviceConfig
+ 
+-# Extra tools in Lineage
+-PRODUCT_PACKAGES += \
+-    7z \
+-    awk \
+-    bash \
+-    bzip2 \
+-    curl \
+-    getcap \
+-    htop \
+-    lib7z \
+-    libsepol \
+-    nano \
+-    pigz \
+-    setcap \
+-    unrar \
+-    vim \
+-    wget \
+-    zip
+-
+ # Filesystems tools
+ PRODUCT_PACKAGES += \
+     fsck.exfat \
+@@ -151,20 +131,6 @@ PRODUCT_PACKAGES += \
+     mkfs.ntfs \
+     mount.ntfs
+ 
+-# Openssh
+-PRODUCT_PACKAGES += \
+-    scp \
+-    sftp \
+-    ssh \
+-    sshd \
+-    sshd_config \
+-    ssh-keygen \
+-    start-ssh
+-
+-# rsync
+-PRODUCT_PACKAGES += \
+-    rsync
+-
+ # Storage manager
+ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
+     ro.storage_manager.enabled=true
+diff --git a/config/common_full.mk b/config/common_full.mk
+index 91bf1984..516f0355 100644
+--- a/config/common_full.mk
++++ b/config/common_full.mk
+@@ -12,7 +12,3 @@ PRODUCT_PACKAGES += \
+     fonts_customization.xml \
+     LineageLatoFont \
+     LineageRubikFont
+-
+-# Recorder
+-PRODUCT_PACKAGES += \
+-    Recorder
+diff --git a/config/common_mobile.mk b/config/common_mobile.mk
+index 5080c360..d4481625 100644
+--- a/config/common_mobile.mk
++++ b/config/common_mobile.mk
+@@ -8,16 +8,12 @@ PRODUCT_PRODUCT_PROPERTIES += \
+ 
+ # AOSP packages
+ PRODUCT_PACKAGES += \
+-    Email \
+-    ExactCalculator \
+-    Exchange2
++    ExactCalculator
+ 
+ # Lineage packages
+ PRODUCT_PACKAGES += \
+     Backgrounds \
+-    Eleven \
+     Etar \
+-    Jelly \
+     Profiles \
+     Seedvault
+ 
+diff --git a/config/telephony.mk b/config/telephony.mk
+index 6adf48d9..f19c2aa4 100644
+--- a/config/telephony.mk
++++ b/config/telephony.mk
+@@ -2,10 +2,6 @@
+ PRODUCT_PACKAGES += \
+     sensitive_pn.xml
+ 
+-# World APN list
+-PRODUCT_PACKAGES += \
+-    apns-conf.xml
+-
+ # Telephony packages
+ PRODUCT_PACKAGES += \
+     messaging \
+-- 
+2.31.1.606.gdf6c4f722c
+

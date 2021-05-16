@@ -1,0 +1,38 @@
+From 83df1f1c28bf63398a3dad97ae3fc8bebd7c0835 Mon Sep 17 00:00:00 2001
+From: Chaitanya Saggurthi <csaggurt@codeaurora.org>
+Date: Fri, 20 Jul 2018 15:07:01 +0530
+Subject: [PATCH 03/10] CDMA MO SMS follow on DC feature
+
+Add new API to send MO CDMA SMS with expectMore option.
+
+CRs-Fixed: 2242430
+Change-Id: I5f504628186eab50f18584251dcbe198483b360f
+---
+ src/java/com/android/internal/telephony/RIL.java | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/java/com/android/internal/telephony/RIL.java b/src/java/com/android/internal/telephony/RIL.java
+index 5ae507d03..186cfff66 100644
+--- a/src/java/com/android/internal/telephony/RIL.java
++++ b/src/java/com/android/internal/telephony/RIL.java
+@@ -259,7 +259,7 @@ public class RIL extends BaseCommands implements CommandsInterface {
+     private WorkSource mActiveWakelockWorkSource;
+ 
+     /** Telephony metrics instance for logging metrics event */
+-    private TelephonyMetrics mMetrics = TelephonyMetrics.getInstance();
++    protected TelephonyMetrics mMetrics = TelephonyMetrics.getInstance();
+     /** Radio bug detector instance */
+     private RadioBugDetector mRadioBugDetector = null;
+ 
+@@ -3483,7 +3483,7 @@ public class RIL extends BaseCommands implements CommandsInterface {
+         }
+     }
+ 
+-    private void constructCdmaSendSmsRilRequest(CdmaSmsMessage msg, byte[] pdu) {
++    protected void constructCdmaSendSmsRilRequest(CdmaSmsMessage msg, byte[] pdu) {
+         int addrNbrOfDigits;
+         int subaddrNbrOfDigits;
+         int bearerDataLength;
+-- 
+2.31.1.606.gdf6c4f722c
+

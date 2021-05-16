@@ -1,0 +1,65 @@
+From f278fcccbc837dbb2c17f19054f0196fc6c6e3ab Mon Sep 17 00:00:00 2001
+From: Susheel Nyamala <snyamala@codeaurora.org>
+Date: Tue, 9 Jun 2020 14:11:41 +0530
+Subject: [PATCH 10/10] Add support to extend methods from VendorPhoneSwitcher
+
+Updated protected access for member variables that are required
+for methods overriden in child class
+
+Change-Id: Ibd4f3a0ca13930e024ce5eae41badb6168e6ea4e
+CRs-Fixed: 2705998
+---
+ .../telephony/vendor/VendorPhoneSwitcher.java | 30 +++++++++++--------
+ 1 file changed, 17 insertions(+), 13 deletions(-)
+
+diff --git a/src/java/com/android/internal/telephony/vendor/VendorPhoneSwitcher.java b/src/java/com/android/internal/telephony/vendor/VendorPhoneSwitcher.java
+index d12ea3345..6949adea2 100644
+--- a/src/java/com/android/internal/telephony/vendor/VendorPhoneSwitcher.java
++++ b/src/java/com/android/internal/telephony/vendor/VendorPhoneSwitcher.java
+@@ -78,14 +78,14 @@ public class VendorPhoneSwitcher extends PhoneSwitcher {
+     private DdsSwitchState mDdsSwitchState = DdsSwitchState.NONE;
+     private final int USER_INITIATED_SWITCH = 0;
+     private final int NONUSER_INITIATED_SWITCH = 1;
+-    private final String PROPERTY_TEMP_DDSSWITCH = "persist.vendor.radio.enable_temp_dds";
+-    private final GsmCdmaCall[] mFgCsCalls;
+-    private final GsmCdmaCall[] mBgCsCalls;
+-    private final GsmCdmaCall[] mRiCsCalls;
+-    private final ImsPhone[] mImsPhones;
+-    private final ImsPhoneCall[] mFgImsCalls;
+-    private final ImsPhoneCall[] mBgImsCalls;
+-    private final ImsPhoneCall[] mRiImsCalls;
++    protected final String PROPERTY_TEMP_DDSSWITCH = "persist.vendor.radio.enable_temp_dds";
++    protected final GsmCdmaCall[] mFgCsCalls;
++    protected final GsmCdmaCall[] mBgCsCalls;
++    protected final GsmCdmaCall[] mRiCsCalls;
++    protected final ImsPhone[] mImsPhones;
++    protected final ImsPhoneCall[] mFgImsCalls;
++    protected final ImsPhoneCall[] mBgImsCalls;
++    protected final ImsPhoneCall[] mRiImsCalls;
+ 
+     private final int EVENT_ALLOW_DATA_FALSE_RESPONSE  = 201;
+     private final int EVENT_ALLOW_DATA_TRUE_RESPONSE   = 202;
+@@ -203,11 +203,15 @@ public class VendorPhoneSwitcher extends PhoneSwitcher {
+             case EVENT_ALLOW_DATA_FALSE_RESPONSE: {
+                 log("EVENT_ALLOW_DATA_FALSE_RESPONSE");
+                 mWaitForDetachResponse = false;
+-                for (int phoneId : mNewActivePhones) {
+-                    activate(phoneId);
+-                }
+-                if (mNewActivePhones.contains(ddsPhoneId)) {
+-                    mManualDdsSwitch = false;
++                if (mNewActivePhones != null) {
++                    for (int phoneId : mNewActivePhones) {
++                        activate(phoneId);
++                    }
++                    if (mNewActivePhones.contains(ddsPhoneId)) {
++                        mManualDdsSwitch = false;
++                    }
++                } else {
++                    log("mNewActivePhones is NULL");
+                 }
+                 break;
+             }
+-- 
+2.31.1.606.gdf6c4f722c
+

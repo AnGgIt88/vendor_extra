@@ -1,0 +1,32 @@
+From cfd84030ae3783c8b119452a46c99aeb88d48377 Mon Sep 17 00:00:00 2001
+From: rohan <purohit.rohan@gmail.com>
+Date: Thu, 16 Jul 2020 07:53:29 -0400
+Subject: [PATCH 11/23] KeyguardIndication: fix fc for certain devices on
+ lockscreen charging info
+
+https://del.dog/unimenocuc.log
+
+Change-Id: If096a9c3b42386a04a06e53e9a156938e281b874
+Signed-off-by: Joey Huab <joey@evolution-x.org>
+Signed-off-by: blinoff82 <blinov.in@gmail.com>
+Signed-off-by: DennySPb <dennyspb@gmail.com>
+---
+ .../systemui/statusbar/KeyguardIndicationController.java        | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/KeyguardIndicationController.java b/packages/SystemUI/src/com/android/systemui/statusbar/KeyguardIndicationController.java
+index 52228a2e8cd..891b1a5759b 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/KeyguardIndicationController.java
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/KeyguardIndicationController.java
+@@ -569,7 +569,7 @@ public class KeyguardIndicationController implements StateListener,
+             }
+             if (mChargingVoltage > 0) {
+                 batteryInfo = (batteryInfo == "" ? "" : batteryInfo + " · ") +
+-                        String.format("%.1f", (mChargingVoltage / 1000 / 1000)) + "V";
++                        String.format("%.1f", (float) (mChargingVoltage / 1000 / 1000)) + "V";
+             }
+             if (mTemperature > 0) {
+                 batteryInfo = (batteryInfo == "" ? "" : batteryInfo + " · ") +
+-- 
+2.31.1.606.gdf6c4f722c
+

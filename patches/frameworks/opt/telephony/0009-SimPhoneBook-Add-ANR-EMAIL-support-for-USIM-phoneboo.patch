@@ -1,0 +1,794 @@
+From f5008fc85ad679996b2c9725478fa23bec8c7020 Mon Sep 17 00:00:00 2001
+From: Yujing Gu <quic_yujingg@quicinc.com>
+Date: Tue, 10 May 2016 15:11:07 +0800
+Subject: [PATCH 09/10] SimPhoneBook: Add ANR/EMAIL support for USIM phonebook.
+
+1. Add multi-EF_ANR/EF_EMAIL support for each ADN record.
+2. Add the related interfaces for getting count of ADN,ANR,EMAIL
+    - getAdnRecordsCapacity
+3. Use updateIccRecordInEf for all update/insert/delete operations.
+    - add updateAdnRecordsWithContentValuesInEfBySearchUsingSubId for
+      updating IccRecord
+
+Update method call to notifyDataConnection
+
+-notifyOffApnsOfAvailability() no longer exists upstream, so the methods
+it calls needed updating
+-update synchronization pattern in
+updateAdnRecordsWithContentValuesInEfBySearch()
+
+Change-Id: I074085b68d133f91ecc75801bac4a4aa569fbc88
+
+[Pig]: Update to LA.QSSI.11.0.r1-06700-qssi.0
+
+Bug: 23044962
+Change-Id: Ia272a015568c69bacf36d774d82aa069eff86d74
+---
+ .../internal/telephony/IIccPhoneBook.aidl     |  50 ++++++++
+ .../IccPhoneBookInterfaceManager.java         | 105 +++++++++++++++-
+ .../internal/telephony/IccProvider.java       |  89 ++++++++++----
+ .../telephony/UiccPhoneBookController.java    |  43 +++++++
+ .../internal/telephony/uicc/AdnRecord.java    | 114 +++++++++++++++---
+ .../IccPhoneBookInterfaceManagerTest.java     |  35 ++++++
+ 6 files changed, 393 insertions(+), 43 deletions(-)
+
+diff --git a/src/java/com/android/internal/telephony/IIccPhoneBook.aidl b/src/java/com/android/internal/telephony/IIccPhoneBook.aidl
+index dc990de65..41a70046f 100644
+--- a/src/java/com/android/internal/telephony/IIccPhoneBook.aidl
++++ b/src/java/com/android/internal/telephony/IIccPhoneBook.aidl
+@@ -16,6 +16,7 @@
+ 
+ package com.android.internal.telephony;
+ 
++import android.content.ContentValues;
+ import com.android.internal.telephony.uicc.AdnRecord;
+ 
+ /**
+@@ -112,6 +113,21 @@ interface IIccPhoneBook {
+             String newPhoneNumber, int index,
+             String pin2);
+ 
++    /**
++     * Replace oldAdn with newAdn in ADN-like record in EF
++     *
++     * getAdnRecordsInEf must be called at least once before this function,
++     * otherwise an error will be returned
++     *
++     * @param subId user preferred subId
++     * @param efid must be one among EF_ADN, EF_FDN, and EF_SDN
++     * @param values including ADN,EMAIL,ANR to be updated
++     * @param pin2 required to update EF_FDN, otherwise must be null
++     * @return true for success
++     */
++    boolean updateAdnRecordsWithContentValuesInEfBySearchUsingSubId(int subId,
++            int efid, in ContentValues values, String pin2);
++
+     /**
+      * Update an ADN-like EF record by record index
+      *
+@@ -157,4 +173,38 @@ interface IIccPhoneBook {
+     @UnsupportedAppUsage
+     int[] getAdnRecordsSizeForSubscriber(int subId, int efid);
+ 
++    /**
++     * Get the capacity of ADN records
++     *
++     * @return  int[10] array
++     *            capacity[0]  is the max count of ADN
++     *            capacity[1]  is the used count of ADN
++     *            capacity[2]  is the max count of EMAIL
++     *            capacity[3]  is the used count of EMAIL
++     *            capacity[4]  is the max count of ANR
++     *            capacity[5]  is the used count of ANR
++     *            capacity[6]  is the max length of name
++     *            capacity[7]  is the max length of number
++     *            capacity[8]  is the max length of email
++     *            capacity[9]  is the max length of anr
++     */
++    int[] getAdnRecordsCapacity();
++
++    /**
++     * Get the capacity of ADN records
++     *
++     * @param subId user preferred subId
++     * @return  int[10] array
++     *            capacity[0]  is the max count of ADN
++     *            capacity[1]  is the used count of ADN
++     *            capacity[2]  is the max count of EMAIL
++     *            capacity[3]  is the used count of EMAIL
++     *            capacity[4]  is the max count of ANR
++     *            capacity[5]  is the used count of ANR
++     *            capacity[6]  is the max length of name
++     *            capacity[7]  is the max length of number
++     *            capacity[8]  is the max length of email
++     *            capacity[9]  is the max length of anr
++     */
++    int[] getAdnRecordsCapacityForSubscriber(int subId);
+ }
+diff --git a/src/java/com/android/internal/telephony/IccPhoneBookInterfaceManager.java b/src/java/com/android/internal/telephony/IccPhoneBookInterfaceManager.java
+index e23000170..0ebc031ef 100644
+--- a/src/java/com/android/internal/telephony/IccPhoneBookInterfaceManager.java
++++ b/src/java/com/android/internal/telephony/IccPhoneBookInterfaceManager.java
+@@ -17,11 +17,13 @@
+ package com.android.internal.telephony;
+ 
+ import android.compat.annotation.UnsupportedAppUsage;
++import android.content.ContentValues;
+ import android.content.pm.PackageManager;
+ import android.os.AsyncResult;
+ import android.os.Handler;
+ import android.os.Looper;
+ import android.os.Message;
++import android.text.TextUtils;
+ 
+ import com.android.internal.telephony.uicc.AdnRecord;
+ import com.android.internal.telephony.uicc.AdnRecordCache;
+@@ -52,9 +54,9 @@ public class IccPhoneBookInterfaceManager {
+     protected static final int EVENT_LOAD_DONE = 2;
+     protected static final int EVENT_UPDATE_DONE = 3;
+ 
+-    private static final class Request {
++    public static final class Request {
+         AtomicBoolean mStatus = new AtomicBoolean(false);
+-        Object mResult = null;
++        public Object mResult = null;
+     }
+ 
+     @UnsupportedAppUsage
+@@ -198,6 +200,67 @@ public class IccPhoneBookInterfaceManager {
+         }
+     }
+ 
++    /**
++     * Replace oldAdn with newAdn in ADN-like record in EF
++     *
++     * getAdnRecordsInEf must be called at least once before this function,
++     * otherwise an error will be returned.
++     * throws SecurityException if no WRITE_CONTACTS permission
++     *
++     * @param efid must be one among EF_ADN, EF_FDN, and EF_SDN
++     * @param values old adn tag,  phone number, email and anr to be replaced
++     *        new adn tag,  phone number, email and anr to be stored
++     * @param newPhoneNumber adn number ot be stored
++     * @param oldPhoneNumber adn number to be replaced
++     *        Set both oldTag, oldPhoneNubmer, oldEmail and oldAnr to ""
++     *        means to replace an empty record, aka, insert new record
++     *        Set both newTag, newPhoneNubmer, newEmail and newAnr ""
++     *        means to replace the old record with empty one, aka, delete old record
++     * @param pin2 required to update EF_FDN, otherwise must be null
++     * @return true for success
++     */
++    public boolean updateAdnRecordsWithContentValuesInEfBySearch(int efid, ContentValues values,
++            String pin2) {
++
++        if (mPhone.getContext().checkCallingOrSelfPermission(
++                android.Manifest.permission.WRITE_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
++            throw new SecurityException("Requires android.permission.WRITE_CONTACTS permission");
++        }
++
++        String oldTag = values.getAsString(IccProvider.STR_TAG);
++        String newTag = values.getAsString(IccProvider.STR_NEW_TAG);
++        String oldPhoneNumber = values.getAsString(IccProvider.STR_NUMBER);
++        String newPhoneNumber = values.getAsString(IccProvider.STR_NEW_NUMBER);
++        String oldEmail = values.getAsString(IccProvider.STR_EMAILS);
++        String newEmail = values.getAsString(IccProvider.STR_NEW_EMAILS);
++        String oldAnr = values.getAsString(IccProvider.STR_ANRS);
++        String newAnr = values.getAsString(IccProvider.STR_NEW_ANRS);
++        String[] oldEmailArray = TextUtils.isEmpty(oldEmail) ? null : getStringArray(oldEmail);
++        String[] newEmailArray = TextUtils.isEmpty(newEmail) ? null : getStringArray(newEmail);
++        String[] oldAnrArray = TextUtils.isEmpty(oldAnr) ? null : getAnrStringArray(oldAnr);
++        String[] newAnrArray = TextUtils.isEmpty(newAnr) ? null : getAnrStringArray(newAnr);
++        efid = updateEfForIccType(efid);
++
++        if (DBG)
++            logd("updateAdnRecordsWithContentValuesInEfBySearch: efid=" + efid + ", values = " +
++                values + ", pin2=" + pin2);
++
++        checkThread();
++        Request updateRequest = new Request();
++        synchronized (updateRequest) {
++            Message response = mBaseHandler.obtainMessage(EVENT_UPDATE_DONE, updateRequest);
++            AdnRecord oldAdn = new AdnRecord(oldTag, oldPhoneNumber, oldEmailArray, oldAnrArray);
++            AdnRecord newAdn = new AdnRecord(newTag, newPhoneNumber, newEmailArray, newAnrArray);
++            if (mAdnCache != null) {
++                mAdnCache.updateAdnBySearch(efid, oldAdn, newAdn, pin2, response);
++                waitForResult(updateRequest);
++            } else {
++                loge("Failure while trying to update by search due to uninitialised adncache");
++            }
++        }
++        return (boolean) updateRequest.mResult;
++    }
++
+     /**
+      * Update an ADN-like EF record by record index
+      *
+@@ -334,7 +397,7 @@ public class IccPhoneBookInterfaceManager {
+     }
+ 
+     @UnsupportedAppUsage
+-    private int updateEfForIccType(int efid) {
++    protected int updateEfForIccType(int efid) {
+         // Check if we are trying to read ADN records
+         if (efid == IccConstants.EF_ADN) {
+             if (mPhone.getCurrentUiccAppType() == AppType.APPTYPE_USIM) {
+@@ -343,5 +406,41 @@ public class IccPhoneBookInterfaceManager {
+         }
+         return efid;
+     }
++
++    protected String[] getStringArray(String str) {
++        if (str != null) {
++            return str.split(",");
++        }
++        return null;
++    }
++
++    protected String[] getAnrStringArray(String str) {
++        if (str != null) {
++            return str.split(":");
++        }
++        return null;
++    }
++
++    /**
++     * Get the capacity of ADN records
++     *
++     * @return  int[6] array
++     *            capacity[0]  is the max count of ADN
++     *            capacity[1]  is the used count of ADN
++     *            capacity[2]  is the max count of EMAIL
++     *            capacity[3]  is the used count of EMAIL
++     *            capacity[4]  is the max count of ANR
++     *            capacity[5]  is the used count of ANR
++     *            capacity[6]  is the max length of name
++     *            capacity[7]  is the max length of number
++     *            capacity[8]  is the max length of email
++     *            capacity[9]  is the max length of anr
++     */
++    public int[] getAdnRecordsCapacity() {
++        if (DBG) logd("getAdnRecordsCapacity" );
++        int capacity[] = new int[10];
++
++        return capacity;
++    }
+ }
+ 
+diff --git a/src/java/com/android/internal/telephony/IccProvider.java b/src/java/com/android/internal/telephony/IccProvider.java
+index 1b68ff680..9c7c0f291 100644
+--- a/src/java/com/android/internal/telephony/IccProvider.java
++++ b/src/java/com/android/internal/telephony/IccProvider.java
+@@ -50,6 +50,7 @@ public class IccProvider extends ContentProvider {
+         "name",
+         "number",
+         "emails",
++        "anrs",
+         "_id"
+     };
+ 
+@@ -61,10 +62,15 @@ public class IccProvider extends ContentProvider {
+     protected static final int SDN_SUB = 6;
+     protected static final int ADN_ALL = 7;
+ 
+-    protected static final String STR_TAG = "tag";
+-    protected static final String STR_NUMBER = "number";
+-    protected static final String STR_EMAILS = "emails";
+-    protected static final String STR_PIN2 = "pin2";
++    public static final String STR_TAG = "tag";
++    public static final String STR_NUMBER = "number";
++    public static final String STR_EMAILS = "emails";
++    public static final String STR_ANRS = "anrs";
++    public static final String STR_NEW_TAG = "newTag";
++    public static final String STR_NEW_NUMBER = "newNumber";
++    public static final String STR_NEW_EMAILS = "newEmails";
++    public static final String STR_NEW_ANRS = "newAnrs";
++    public static final String STR_PIN2 = "pin2";
+ 
+     private static final UriMatcher URL_MATCHER =
+                             new UriMatcher(UriMatcher.NO_MATCH);
+@@ -204,8 +210,20 @@ public class IccProvider extends ContentProvider {
+ 
+         String tag = initialValues.getAsString("tag");
+         String number = initialValues.getAsString("number");
+-        // TODO(): Read email instead of sending null.
+-        boolean success = addIccRecordToEf(efType, tag, number, null, pin2, subId);
++
++        String emails = initialValues.getAsString("emails");
++        String anrs = initialValues.getAsString("anrs");
++
++        ContentValues values = new ContentValues();
++        values.put(STR_TAG,"");
++        values.put(STR_NUMBER,"");
++        values.put(STR_EMAILS,"");
++        values.put(STR_ANRS,"");
++        values.put(STR_NEW_TAG,tag);
++        values.put(STR_NEW_NUMBER,number);
++        values.put(STR_NEW_EMAILS,emails);
++        values.put(STR_NEW_ANRS,anrs);
++        boolean success = updateIccRecordInEf(efType, values, pin2, subId);
+ 
+         if (!success) {
+             return null;
+@@ -298,7 +316,8 @@ public class IccProvider extends ContentProvider {
+         // parse where clause
+         String tag = null;
+         String number = null;
+-        String[] emails = null;
++        String emails = null;
++        String anrs = null;
+         String pin2 = null;
+ 
+         String[] tokens = where.split(" AND ");
+@@ -322,18 +341,29 @@ public class IccProvider extends ContentProvider {
+             } else if (STR_NUMBER.equals(key)) {
+                 number = normalizeValue(val);
+             } else if (STR_EMAILS.equals(key)) {
+-                //TODO(): Email is null.
+-                emails = null;
++                emails = normalizeValue(val);
++            } else if (STR_ANRS.equals(key)) {
++                anrs = normalizeValue(val);
+             } else if (STR_PIN2.equals(key)) {
+                 pin2 = normalizeValue(val);
+             }
+         }
+ 
+-        if (efType == FDN && TextUtils.isEmpty(pin2)) {
++        ContentValues values = new ContentValues();
++        values.put(STR_TAG,tag);
++        values.put(STR_NUMBER,number);
++        values.put(STR_EMAILS,emails);
++        values.put(STR_ANRS,anrs);
++        values.put(STR_NEW_TAG,"");
++        values.put(STR_NEW_NUMBER,"");
++        values.put(STR_NEW_EMAILS,"");
++        values.put(STR_NEW_ANRS,"");
++        if ((efType == FDN) && TextUtils.isEmpty(pin2)) {
+             return 0;
+         }
+ 
+-        boolean success = deleteIccRecordFromEf(efType, tag, number, emails, pin2, subId);
++        if (DBG) log("delete mvalues= " + values);
++        boolean success = updateIccRecordInEf(efType, values, pin2, subId);
+         if (!success) {
+             return 0;
+         }
+@@ -386,8 +416,7 @@ public class IccProvider extends ContentProvider {
+         String newNumber = values.getAsString("newNumber");
+         String[] newEmails = null;
+         // TODO(): Update for email.
+-        boolean success = updateIccRecordInEf(efType, tag, number,
+-                newTag, newNumber, pin2, subId);
++        boolean success = updateIccRecordInEf(efType, values, pin2, subId);
+ 
+         if (!success) {
+             return 0;
+@@ -421,7 +450,7 @@ public class IccProvider extends ContentProvider {
+             // Load the results
+             final int N = adnRecords.size();
+             final MatrixCursor cursor = new MatrixCursor(ADDRESS_BOOK_COLUMN_NAMES, N);
+-            if (DBG) log("adnRecords.size=" + N);
++            log("adnRecords.size=" + N);
+             for (int i = 0; i < N ; i++) {
+                 loadRecord(adnRecords.get(i), cursor, i);
+             }
+@@ -467,15 +496,11 @@ public class IccProvider extends ContentProvider {
+     }
+ 
+     private boolean
+-    updateIccRecordInEf(int efType, String oldName, String oldNumber,
+-            String newName, String newNumber, String pin2, int subId) {
+-        if (DBG) log("updateIccRecordInEf: efType=0x" + Integer.toHexString(efType).toUpperCase() +
+-                ", oldname=" + Rlog.pii(TAG, oldName) + ", oldnumber=" + Rlog.pii(TAG, oldNumber) +
+-                ", newname=" + Rlog.pii(TAG, newName) + ", newnumber=" + Rlog.pii(TAG, newName) +
+-                ", subscription=" + subId);
+-
++    updateIccRecordInEf(int efType, ContentValues values, String pin2, int subId) {
+         boolean success = false;
+ 
++        if (DBG) log("updateIccRecordInEf: efType=" + efType +
++                    ", values: [ "+ values + " ], subId:" + subId);
+         try {
+             IIccPhoneBook iccIpb = IIccPhoneBook.Stub.asInterface(
+                     TelephonyFrameworkInitializer
+@@ -483,8 +508,9 @@ public class IccProvider extends ContentProvider {
+                             .getIccPhoneBookServiceRegisterer()
+                             .get());
+             if (iccIpb != null) {
+-                success = iccIpb.updateAdnRecordsInEfBySearchForSubscriber(subId, efType, oldName,
+-                        oldNumber, newName, newNumber, pin2);
++                success = iccIpb
++                        .updateAdnRecordsWithContentValuesInEfBySearchUsingSubId(
++                            subId, efType, values, pin2);
+             }
+         } catch (RemoteException ex) {
+             // ignore it
+@@ -495,7 +521,6 @@ public class IccProvider extends ContentProvider {
+         return success;
+     }
+ 
+-
+     private boolean deleteIccRecordFromEf(int efType, String name, String number, String[] emails,
+             String pin2, int subId) {
+         if (DBG) log("deleteIccRecordFromEf: efType=0x" +
+@@ -533,9 +558,10 @@ public class IccProvider extends ContentProvider {
+     @UnsupportedAppUsage
+     private void loadRecord(AdnRecord record, MatrixCursor cursor, int id) {
+         if (!record.isEmpty()) {
+-            Object[] contact = new Object[4];
++            Object[] contact = new Object[5];
+             String alphaTag = record.getAlphaTag();
+             String number = record.getNumber();
++            String[] anrs = record.getAdditionalNumbers();
+ 
+             if (DBG) log("loadRecord: " + alphaTag + ", " + Rlog.pii(TAG, number));
+             contact[0] = alphaTag;
+@@ -551,7 +577,18 @@ public class IccProvider extends ContentProvider {
+                 }
+                 contact[2] = emailString.toString();
+             }
+-            contact[3] = id;
++
++            if (anrs != null) {
++                StringBuilder anrString = new StringBuilder();
++                for (String anr : anrs) {
++                    if (DBG) log("Adding anr:" + anr);
++                    anrString.append(anr);
++                    anrString.append(":");
++                }
++                contact[3] = anrString.toString();
++            }
++
++            contact[4] = id;
+             cursor.addRow(contact);
+         }
+     }
+diff --git a/src/java/com/android/internal/telephony/UiccPhoneBookController.java b/src/java/com/android/internal/telephony/UiccPhoneBookController.java
+index 54eae6fbc..00cec53ec 100644
+--- a/src/java/com/android/internal/telephony/UiccPhoneBookController.java
++++ b/src/java/com/android/internal/telephony/UiccPhoneBookController.java
+@@ -19,6 +19,7 @@
+ package com.android.internal.telephony;
+ 
+ import android.compat.annotation.UnsupportedAppUsage;
++import android.content.ContentValues;
+ import android.os.TelephonyServiceManager.ServiceRegisterer;
+ import android.telephony.TelephonyFrameworkInitializer;
+ 
+@@ -128,6 +129,48 @@ public class UiccPhoneBookController extends IIccPhoneBook.Stub {
+         }
+     }
+ 
++    @Override
++    public int[] getAdnRecordsCapacity() throws android.os.RemoteException {
++        return getAdnRecordsCapacityForSubscriber(getDefaultSubscription());
++    }
++
++    @Override
++    public int[] getAdnRecordsCapacityForSubscriber(int subId)
++           throws android.os.RemoteException {
++        IccPhoneBookInterfaceManager iccPbkIntMgr =
++                             getIccPhoneBookInterfaceManager(subId);
++        if (iccPbkIntMgr != null) {
++            return iccPbkIntMgr.getAdnRecordsCapacity();
++        } else {
++            Rlog.e(TAG,"getAdnRecordsCapacity iccPbkIntMgr is" +
++                      " null for Subscription:"+subId);
++            return null;
++        }
++    }
++
++    public boolean
++    updateAdnRecordsWithContentValuesInEfBySearch(int efid, ContentValues values,
++        String pin2) throws android.os.RemoteException {
++            return updateAdnRecordsWithContentValuesInEfBySearchUsingSubId(
++                getDefaultSubscription(), efid, values, pin2);
++    }
++
++    public boolean
++    updateAdnRecordsWithContentValuesInEfBySearchUsingSubId(int subId, int efid,
++        ContentValues values, String pin2)
++        throws android.os.RemoteException {
++        IccPhoneBookInterfaceManager iccPbkIntMgr =
++                             getIccPhoneBookInterfaceManager(subId);
++        if (iccPbkIntMgr != null) {
++            return iccPbkIntMgr.updateAdnRecordsWithContentValuesInEfBySearch(
++                efid, values, pin2);
++        } else {
++            Rlog.e(TAG,"updateAdnRecordsWithContentValuesInEfBySearchUsingSubId " +
++                "iccPbkIntMgr is null for Subscription:"+subId);
++            return false;
++        }
++    }
++
+     /**
+      * get phone book interface manager object based on subscription.
+      **/
+diff --git a/src/java/com/android/internal/telephony/uicc/AdnRecord.java b/src/java/com/android/internal/telephony/uicc/AdnRecord.java
+index a0b64382d..fb1d3af9f 100644
+--- a/src/java/com/android/internal/telephony/uicc/AdnRecord.java
++++ b/src/java/com/android/internal/telephony/uicc/AdnRecord.java
+@@ -45,6 +45,7 @@ public class AdnRecord implements Parcelable {
+     String mNumber = null;
+     @UnsupportedAppUsage
+     String[] mEmails;
++    String[] mAdditionalNumbers = null;
+     @UnsupportedAppUsage
+     int mExtRecord = 0xff;
+     @UnsupportedAppUsage
+@@ -87,14 +88,16 @@ public class AdnRecord implements Parcelable {
+             String alphaTag;
+             String number;
+             String[] emails;
++            String[] additionalNumbers;
+ 
+             efid = source.readInt();
+             recordNumber = source.readInt();
+             alphaTag = source.readString();
+             number = source.readString();
+             emails = source.createStringArray();
++            additionalNumbers = source.readStringArray();
+ 
+-            return new AdnRecord(efid, recordNumber, alphaTag, number, emails);
++            return new AdnRecord(efid, recordNumber, alphaTag, number, emails, additionalNumbers);
+         }
+ 
+         @Override
+@@ -127,6 +130,10 @@ public class AdnRecord implements Parcelable {
+         this(0, 0, alphaTag, number, emails);
+     }
+ 
++    public AdnRecord(String alphaTag, String number, String[] emails, String[] additionalNumbers) {
++        this(0, 0, alphaTag, number, emails, additionalNumbers);
++    }
++
+     @UnsupportedAppUsage
+     public AdnRecord (int efid, int recordNumber, String alphaTag, String number, String[] emails) {
+         this.mEfid = efid;
+@@ -134,6 +141,17 @@ public class AdnRecord implements Parcelable {
+         this.mAlphaTag = alphaTag;
+         this.mNumber = number;
+         this.mEmails = emails;
++        this.mAdditionalNumbers = null;
++    }
++
++    public AdnRecord(int efid, int recordNumber, String alphaTag, String number, String[] emails,
++            String[] additionalNumbers) {
++        this.mEfid = efid;
++        this.mRecordNumber = recordNumber;
++        this.mAlphaTag = alphaTag;
++        this.mNumber = number;
++        this.mEmails = emails;
++        this.mAdditionalNumbers = additionalNumbers;
+     }
+ 
+     @UnsupportedAppUsage
+@@ -143,6 +161,7 @@ public class AdnRecord implements Parcelable {
+         this.mAlphaTag = alphaTag;
+         this.mNumber = number;
+         this.mEmails = null;
++        this.mAdditionalNumbers = null;
+     }
+ 
+     //***** Instance Methods
+@@ -178,15 +197,33 @@ public class AdnRecord implements Parcelable {
+         this.mEmails = emails;
+     }
+ 
++    public String[] getAdditionalNumbers() {
++        return mAdditionalNumbers;
++    }
++
++    public void setAdditionalNumbers(String[] additionalNumbers) {
++        this.mAdditionalNumbers = additionalNumbers;
++    }
++
++    public int getRecordNumber() {
++        return mRecordNumber;
++    }
++
++    public void setRecordNumber(int recNumber) {
++        mRecordNumber = recNumber;
++    }
++
+     @Override
+     public String toString() {
+         return "ADN Record '" + mAlphaTag + "' '" + Rlog.pii(LOG_TAG, mNumber) + " "
+-                + Rlog.pii(LOG_TAG, mEmails) + "'";
++                + Rlog.pii(LOG_TAG, mEmails) + " "
++                + Rlog.pii(LOG_TAG, mAdditionalNumbers) + "'";
+     }
+ 
+     @UnsupportedAppUsage
+     public boolean isEmpty() {
+-        return TextUtils.isEmpty(mAlphaTag) && TextUtils.isEmpty(mNumber) && mEmails == null;
++        return TextUtils.isEmpty(mAlphaTag) && TextUtils.isEmpty(mNumber) && mEmails == null
++                && mAdditionalNumbers == null;
+     }
+ 
+     public boolean hasExtendedRecord() {
+@@ -207,10 +244,54 @@ public class AdnRecord implements Parcelable {
+         return (s1.equals(s2));
+     }
+ 
++    /** Help function for ANR/EMAIL array compare. */
++    private static boolean arrayCompareNullEqualsEmpty(String s1[], String s2[]) {
++        if (s1 == s2) {
++            return true;
++        }
++
++        if (s1 == null) {
++            s1 = new String[1];
++            s1[0] = "";
++        }
++
++        if (s2 == null) {
++            s2 = new String[1];
++            s2[0] = "";
++        }
++
++        for (String str:s1) {
++            if (TextUtils.isEmpty(str)) {
++                continue;
++            } else {
++                if (Arrays.asList(s2).contains(str)) {
++                    continue;
++                } else {
++                    return false;
++                }
++            }
++        }
++
++        for (String str:s2) {
++            if (TextUtils.isEmpty(str)) {
++                continue;
++            } else {
++                if (Arrays.asList(s1).contains(str)) {
++                    continue;
++                } else {
++                    return false;
++                }
++            }
++        }
++
++        return true;
++    }
++
+     public boolean isEqual(AdnRecord adn) {
+         return ( stringCompareNullEqualsEmpty(mAlphaTag, adn.mAlphaTag) &&
+                 stringCompareNullEqualsEmpty(mNumber, adn.mNumber) &&
+-                Arrays.equals(mEmails, adn.mEmails));
++                arrayCompareNullEqualsEmpty(mEmails, adn.mEmails)
++                && arrayCompareNullEqualsEmpty(mAdditionalNumbers, adn.mAdditionalNumbers));
+     }
+     //***** Parcelable Implementation
+ 
+@@ -226,6 +307,7 @@ public class AdnRecord implements Parcelable {
+         dest.writeString(mAlphaTag);
+         dest.writeString(mNumber);
+         dest.writeStringArray(mEmails);
++        dest.writeStringArray(mAdditionalNumbers);
+     }
+ 
+     /**
+@@ -249,31 +331,33 @@ public class AdnRecord implements Parcelable {
+             adnString[i] = (byte) 0xFF;
+         }
+ 
+-        if (TextUtils.isEmpty(mNumber)) {
++        if ((TextUtils.isEmpty(mNumber)) && (TextUtils.isEmpty(mAlphaTag))) {
+             Rlog.w(LOG_TAG, "[buildAdnString] Empty dialing number");
+             return adnString;   // return the empty record (for delete)
+-        } else if (mNumber.length()
+-                > (ADN_DIALING_NUMBER_END - ADN_DIALING_NUMBER_START + 1) * 2) {
++        } else if ((mNumber != null) && (mNumber.length()
++                > (ADN_DIALING_NUMBER_END - ADN_DIALING_NUMBER_START + 1) * 2)) {
+             Rlog.w(LOG_TAG,
+                     "[buildAdnString] Max length of dialing number is 20");
+             return null;
+         }
+ 
+-        byteTag = !TextUtils.isEmpty(mAlphaTag) ? GsmAlphabet.stringToGsm8BitPacked(mAlphaTag)
++        byteTag = !TextUtils.isEmpty(mAlphaTag) ? IccUtils.stringToAdnStringField(mAlphaTag)
+                 : new byte[0];
+ 
+         if (byteTag.length > footerOffset) {
+             Rlog.w(LOG_TAG, "[buildAdnString] Max length of tag is " + footerOffset);
+             return null;
+         } else {
+-            bcdNumber = PhoneNumberUtils.numberToCalledPartyBCD(
+-                    mNumber, PhoneNumberUtils.BCD_EXTENDED_TYPE_EF_ADN);
++            if (!(TextUtils.isEmpty(mNumber))) {
++                bcdNumber = PhoneNumberUtils.numberToCalledPartyBCD(
++                        mNumber, PhoneNumberUtils.BCD_EXTENDED_TYPE_EF_ADN);
+ 
+-            System.arraycopy(bcdNumber, 0, adnString,
+-                    footerOffset + ADN_TON_AND_NPI, bcdNumber.length);
++                System.arraycopy(bcdNumber, 0, adnString,
++                        footerOffset + ADN_TON_AND_NPI, bcdNumber.length);
+ 
+-            adnString[footerOffset + ADN_BCD_NUMBER_LENGTH]
+-                    = (byte) (bcdNumber.length);
++                adnString[footerOffset + ADN_BCD_NUMBER_LENGTH]
++                        = (byte) (bcdNumber.length);
++            }
+             adnString[footerOffset + ADN_CAPABILITY_ID]
+                     = (byte) 0xFF; // Capability Id
+             adnString[footerOffset + ADN_EXTENSION_ID]
+@@ -358,12 +442,14 @@ public class AdnRecord implements Parcelable {
+             mExtRecord = 0xff & record[record.length - 1];
+ 
+             mEmails = null;
++            mAdditionalNumbers = null;
+ 
+         } catch (RuntimeException ex) {
+             Rlog.w(LOG_TAG, "Error parsing AdnRecord", ex);
+             mNumber = "";
+             mAlphaTag = "";
+             mEmails = null;
++            mAdditionalNumbers = null;
+         }
+     }
+ }
+diff --git a/tests/telephonytests/src/com/android/internal/telephony/uicc/IccPhoneBookInterfaceManagerTest.java b/tests/telephonytests/src/com/android/internal/telephony/uicc/IccPhoneBookInterfaceManagerTest.java
+index 72ff32105..fe18d35c1 100644
+--- a/tests/telephonytests/src/com/android/internal/telephony/uicc/IccPhoneBookInterfaceManagerTest.java
++++ b/tests/telephonytests/src/com/android/internal/telephony/uicc/IccPhoneBookInterfaceManagerTest.java
+@@ -15,6 +15,7 @@
+  */
+ package com.android.internal.telephony.uicc;
+ 
++import android.content.ContentValues;
+ import android.os.HandlerThread;
+ import android.os.Message;
+ import android.os.AsyncResult;
+@@ -36,7 +37,9 @@ import org.mockito.stubbing.Answer;
+ 
+ import static org.junit.Assert.assertEquals;
+ import static org.junit.Assert.assertNull;
++import static org.junit.Assert.assertTrue;
+ import static org.mockito.Mockito.anyInt;
++import static org.mockito.Mockito.anyString;
+ 
+ import java.util.Arrays;
+ import java.util.List;
+@@ -116,4 +119,36 @@ public class IccPhoneBookInterfaceManagerTest extends TelephonyTest {
+         //verify the previous read is not got affected
+         assertEquals(mAdnList, adnListResult);
+     }
++
++    @Test
++    @SmallTest
++    public void testUpdateAdnRecord() {
++        doAnswer(new Answer<Void>() {
++            @Override
++            public Void answer(InvocationOnMock invocation) throws Throwable {
++                Message response = (Message) invocation.getArguments()[4];
++                //set result for update ADN EF
++                AsyncResult.forMessage(response).exception = null;
++                response.sendToTarget();
++                return null;
++            }
++        }).when(mAdnRecordCache).updateAdnBySearch(
++            anyInt(), (AdnRecord) anyObject(), (AdnRecord) anyObject(),
++            anyString(), (Message) anyObject());
++
++        ContentValues values = new ContentValues();
++        values.put("tag", "");
++        values.put("number", "");
++        values.put("emails", "");
++        values.put("anrs", "");
++        values.put("newTag", "test");
++        values.put("newNumber", "123456");
++        values.put("newEmails", "");
++        values.put("newAnrs", "");
++
++        boolean result = mIccPhoneBookInterfaceMgr.updateAdnRecordsWithContentValuesInEfBySearch(
++                IccConstants.EF_ADN, values , "1234");
++
++        assertTrue(result);
++    }
+ }
+-- 
+2.31.1.606.gdf6c4f722c
+

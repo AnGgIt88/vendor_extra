@@ -1,0 +1,116 @@
+From d6a4ba4b20ea6aaf84ef9ffbffc5ac7f2441067d Mon Sep 17 00:00:00 2001
+From: maxwen <max.weninger@gmail.com>
+Date: Sun, 29 Mar 2015 14:00:00 +0100
+Subject: [PATCH 07/23] base: Allow disabling screenshot shutter sound [1/2]
+
+Includes also:
+
+commit b794cab075a38caccbb3c411b8b697426df27653
+Co-Authored-By: xyyx <xyyx@mail.ru>
+Date:   Thu Jan 12 21:59:42 2017 +0800
+
+    ScreenshotSound: Fix playing screenshot's sound when camera's sounds off.
+    This bug actually because Screenshot uses Camera Shutter Sound
+
+idoybh: Adapt to A11
+Pulkit077: Adapted to ringer mode
+
+Change-Id: If6f766e4b581e7c35d36e2e777ce2c37a3843ad4
+---
+ core/java/android/provider/Settings.java        |  6 ++++++
+ .../settings/backup/SystemSettings.java         |  1 +
+ .../validators/SystemSettingsValidators.java    |  1 +
+ .../systemui/screenshot/GlobalScreenshot.java   | 17 ++++++++++++-----
+ 4 files changed, 20 insertions(+), 5 deletions(-)
+
+diff --git a/core/java/android/provider/Settings.java b/core/java/android/provider/Settings.java
+index eee93bfe90a..7af98602ddb 100755
+--- a/core/java/android/provider/Settings.java
++++ b/core/java/android/provider/Settings.java
+@@ -4807,6 +4807,12 @@ public final class Settings {
+          */
+         public static final String MULTI_AUDIO_FOCUS_ENABLED = "multi_audio_focus_enabled";
+ 
++        /**
++         * Whether to enable screenshot sound
++         * @hide
++         */
++        public static final String SCREENSHOT_SOUND = "screenshot_sound";
++
+         /**
+          * IMPORTANT: If you add a new public settings you also have to add it to
+          * PUBLIC_SETTINGS below. If the new setting is hidden you have to add
+diff --git a/packages/SettingsProvider/src/android/provider/settings/backup/SystemSettings.java b/packages/SettingsProvider/src/android/provider/settings/backup/SystemSettings.java
+index c4330e16d23..dcc41a8dd5f 100644
+--- a/packages/SettingsProvider/src/android/provider/settings/backup/SystemSettings.java
++++ b/packages/SettingsProvider/src/android/provider/settings/backup/SystemSettings.java
+@@ -84,5 +84,6 @@ public class SystemSettings {
+         Settings.System.DISPLAY_COLOR_MODE,
+         Settings.System.ALARM_ALERT,
+         Settings.System.NOTIFICATION_LIGHT_PULSE,
++        Settings.System.SCREENSHOT_SOUND,
+     };
+ }
+diff --git a/packages/SettingsProvider/src/android/provider/settings/validators/SystemSettingsValidators.java b/packages/SettingsProvider/src/android/provider/settings/validators/SystemSettingsValidators.java
+index 26f0e50c1e5..cddf183f1ae 100644
+--- a/packages/SettingsProvider/src/android/provider/settings/validators/SystemSettingsValidators.java
++++ b/packages/SettingsProvider/src/android/provider/settings/validators/SystemSettingsValidators.java
+@@ -209,5 +209,6 @@ public class SystemSettingsValidators {
+         VALIDATORS.put(System.SHOW_BATTERY_PERCENT, BOOLEAN_VALIDATOR);
+         VALIDATORS.put(System.NOTIFICATION_LIGHT_PULSE, BOOLEAN_VALIDATOR);
+         VALIDATORS.put(System.ACCELEROMETER_ROTATION_ANGLES, NON_NEGATIVE_INTEGER_VALIDATOR);
++        VALIDATORS.put(System.SCREENSHOT_SOUND, BOOLEAN_VALIDATOR);
+     }
+ }
+diff --git a/packages/SystemUI/src/com/android/systemui/screenshot/GlobalScreenshot.java b/packages/SystemUI/src/com/android/systemui/screenshot/GlobalScreenshot.java
+index 8501547ac56..b8b3f83c49a 100644
+--- a/packages/SystemUI/src/com/android/systemui/screenshot/GlobalScreenshot.java
++++ b/packages/SystemUI/src/com/android/systemui/screenshot/GlobalScreenshot.java
+@@ -55,6 +55,8 @@ import android.graphics.drawable.LayerDrawable;
+ import android.hardware.camera2.CameraManager;
+ import android.media.AudioManager;
+ import android.media.MediaActionSound;
++import android.media.Ringtone;
++import android.media.RingtoneManager;
+ import android.net.Uri;
+ import android.os.Handler;
+ import android.os.Looper;
+@@ -228,7 +230,7 @@ public class GlobalScreenshot implements ViewTreeObserver.OnComputeInternalInset
+     private float mCornerSizeX;
+     private float mDismissDeltaY;
+ 
+-    private MediaActionSound mCameraSound;
++    private Ringtone mScreenshotSound;
+     private AudioManager mAudioManager;
+     private Vibrator mVibrator;
+ 
+@@ -327,9 +329,9 @@ public class GlobalScreenshot implements ViewTreeObserver.OnComputeInternalInset
+         mFastOutSlowIn =
+                 AnimationUtils.loadInterpolator(mContext, android.R.interpolator.fast_out_slow_in);
+ 
+-        // Setup the Camera shutter sound
+-        mCameraSound = new MediaActionSound();
+-        mCameraSound.load(MediaActionSound.SHUTTER_CLICK);
++        // Setup the Screenshot sound
++        mScreenshotSound = RingtoneManager.getRingtone(mContext,
++                    Uri.parse("file://" + "/product/media/audio/ui/camera_click.ogg"));
+ 
+         // Grab system services needed for screenshot sound
+         mAudioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
+@@ -1284,7 +1286,12 @@ public class GlobalScreenshot implements ViewTreeObserver.OnComputeInternalInset
+         // We want to play the shutter sound when it's either forced or
+         // when we use normal ringer mode
+         if (playSound) {
+-            mCameraSound.play(MediaActionSound.SHUTTER_CLICK);
++                        if (Settings.System.getInt(mContext.getContentResolver(),
++                                Settings.System.SCREENSHOT_SOUND, 1) == 1) {
++                            if (mScreenshotSound != null) {
++                               mScreenshotSound.play();
++                            }
++                        }
+         }
+     }
+ 
+-- 
+2.31.1.606.gdf6c4f722c
+

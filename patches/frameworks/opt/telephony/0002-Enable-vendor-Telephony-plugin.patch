@@ -1,0 +1,438 @@
+From 8cea9be9d268bdd5a3b9ef924a6102e74b52b0e4 Mon Sep 17 00:00:00 2001
+From: Sneh Bansal <snehb@codeaurora.org>
+Date: Wed, 24 Jan 2018 15:57:05 +0530
+Subject: [PATCH 02/10] Enable vendor Telephony plugin
+
+- Add hooks to vendor components.
+- Change access specifiers of members from private to protected.
+- Override factory methods.
+- Add support for HIDL service to implement vendor/OEM specific features.
+
+CRs-Fixed: 2178879
+
+Start using inject framework support
+
+- Start using inject mechanism to invoke vendor specific code.
+- Add the inject support for the classes extended in vendor space.
+
+Change-Id: I35b9761c15aebc32f48107bbe6b3bcec9a1eb670
+CRs-Fixed: 2394018
+
+Fix to inject vendor specific files
+
+Send appropriate TelephonyComponentFactory object to GsmCdmaPhone constructor
+to inject vendor specific classes from GsmCdmaPhone.
+
+Change-Id: I12d476763c4849b2b7627075a4a5b80f6a5361b9
+CRs-Fixed: 2404615
+
+[Pig]: Update to LA.QSSI.11.0.r1-06700-qssi.0
+
+Change-Id: I0b8369f88c05d56973c0adb6f08607460601302e
+---
+ .../internal/telephony/PhoneFactory.java      | 31 +++++++++++++---
+ .../internal/telephony/PhoneSwitcher.java     |  9 +++--
+ .../com/android/internal/telephony/RIL.java   | 20 +++++++++--
+ .../telephony/TelephonyComponentFactory.java  | 36 +++++++++++++++++++
+ .../telephony/dataconnection/DcTracker.java   | 10 +++++-
+ .../TelephonyNetworkFactory.java              |  4 +--
+ .../TelephonyNetworkFactoryTest.java          |  2 +-
+ 7 files changed, 97 insertions(+), 15 deletions(-)
+
+diff --git a/src/java/com/android/internal/telephony/PhoneFactory.java b/src/java/com/android/internal/telephony/PhoneFactory.java
+index 12a37cd99..769d50faf 100644
+--- a/src/java/com/android/internal/telephony/PhoneFactory.java
++++ b/src/java/com/android/internal/telephony/PhoneFactory.java
+@@ -149,6 +149,8 @@ public class PhoneFactory {
+                 sMetricsCollector = new MetricsCollector(context);
+ 
+                 sPhoneNotifier = new DefaultPhoneNotifier(context);
++                TelephonyComponentFactory telephonyComponentFactory
++                        = TelephonyComponentFactory.getInstance();
+ 
+                 int cdmaSubscription = CdmaSubscriptionSourceManager.getDefault(context);
+                 Rlog.i(LOG_TAG, "Cdma Subscription set to " + cdmaSubscription);
+@@ -169,8 +171,8 @@ public class PhoneFactory {
+                     networkModes[i] = RILConstants.PREFERRED_NETWORK_MODE;
+ 
+                     Rlog.i(LOG_TAG, "Network Mode set to " + Integer.toString(networkModes[i]));
+-                    sCommandsInterfaces[i] = new RIL(context, networkModes[i],
+-                            cdmaSubscription, i);
++                    sCommandsInterfaces[i] = telephonyComponentFactory.inject(RIL.class.getName()).
++                            makeRIL(context, networkModes[i], cdmaSubscription, i);
+                 }
+ 
+                 // Instantiate UiccController so that all other classes can just
+@@ -191,7 +193,24 @@ public class PhoneFactory {
+                 }
+ 
+                 for (int i = 0; i < numPhones; i++) {
+-                    sPhones[i] = createPhone(context, i);
++                    Phone phone = null;
++                    int phoneType = TelephonyManager.getPhoneType(networkModes[i]);
++                    TelephonyComponentFactory injectedComponentFactory =
++                            telephonyComponentFactory.inject(GsmCdmaPhone.class.getName());
++                    if (phoneType == PhoneConstants.PHONE_TYPE_GSM) {
++                        phone = injectedComponentFactory.makePhone(context,
++                                sCommandsInterfaces[i], sPhoneNotifier, i,
++                                PhoneConstants.PHONE_TYPE_GSM,
++                                TelephonyComponentFactory.getInstance());
++                    } else if (phoneType == PhoneConstants.PHONE_TYPE_CDMA) {
++                        phone = injectedComponentFactory.makePhone(context,
++                                sCommandsInterfaces[i], sPhoneNotifier, i,
++                                PhoneConstants.PHONE_TYPE_CDMA_LTE,
++                                TelephonyComponentFactory.getInstance());
++                    }
++                    Rlog.i(LOG_TAG, "Creating Phone with type = " + phoneType + " sub = " + i);
++
++                    sPhones[i] = phone;
+                 }
+ 
+                 // Set the default phone in base class.
+@@ -254,8 +273,10 @@ public class PhoneFactory {
+ 
+                 for (int i = 0; i < numPhones; i++) {
+                     sTelephonyNetworkFactories[i] = new TelephonyNetworkFactory(
+-                            Looper.myLooper(), sPhones[i]);
++                            Looper.myLooper(), sPhones[i], sPhoneSwitcher);
+                 }
++                telephonyComponentFactory.inject(TelephonyComponentFactory.class.getName()).
++                        makeExtTelephonyClasses(context, sPhones, sCommandsInterfaces);
+             }
+         }
+     }
+@@ -290,7 +311,7 @@ public class PhoneFactory {
+                     sPhones[i].createImsPhone();
+                 }
+                 sTelephonyNetworkFactories[i] = new TelephonyNetworkFactory(
+-                        Looper.myLooper(), sPhones[i]);
++                        Looper.myLooper(), sPhones[i], sPhoneSwitcher);
+             }
+         }
+     }
+diff --git a/src/java/com/android/internal/telephony/PhoneSwitcher.java b/src/java/com/android/internal/telephony/PhoneSwitcher.java
+index 3e156661c..6a34a6278 100644
+--- a/src/java/com/android/internal/telephony/PhoneSwitcher.java
++++ b/src/java/com/android/internal/telephony/PhoneSwitcher.java
+@@ -84,7 +84,7 @@ import java.util.concurrent.CompletableFuture;
+  * the active phones.  Note we don't wait for data attach (which may not happen anyway).
+  */
+ public class PhoneSwitcher extends Handler {
+-    private static final String LOG_TAG = "PhoneSwitcher";
++    protected static final String LOG_TAG = "PhoneSwitcher";
+     protected static final boolean VDBG = false;
+ 
+     private static final int DEFAULT_NETWORK_CHANGE_TIMEOUT_MS = 5000;
+@@ -231,7 +231,7 @@ public class PhoneSwitcher extends Handler {
+ 
+     private ISetOpportunisticDataCallback mSetOpptSubCallback;
+ 
+-    private static final int EVENT_PRIMARY_DATA_SUB_CHANGED       = 101;
++    protected static final int EVENT_PRIMARY_DATA_SUB_CHANGED       = 101;
+     protected static final int EVENT_SUBSCRIPTION_CHANGED           = 102;
+     private static final int EVENT_REQUEST_NETWORK                = 103;
+     private static final int EVENT_RELEASE_NETWORK                = 104;
+@@ -266,6 +266,9 @@ public class PhoneSwitcher extends Handler {
+     @VisibleForTesting
+     public static final int EVENT_MULTI_SIM_CONFIG_CHANGED        = 117;
+     private static final int EVENT_NETWORK_AVAILABLE              = 118;
++    protected final static int EVENT_VOICE_CALL_ENDED             = 119;
++    protected static final int EVENT_UNSOL_MAX_DATA_ALLOWED_CHANGED = 120;
++    protected static final int EVENT_OEM_HOOK_SERVICE_READY       = 121;
+ 
+     // Depending on version of IRadioConfig, we need to send either RIL_REQUEST_ALLOW_DATA if it's
+     // 1.0, or RIL_REQUEST_SET_PREFERRED_DATA if it's 1.1 or later. So internally mHalCommandToUse
+@@ -1005,7 +1008,7 @@ public class PhoneSwitcher extends Handler {
+         }
+     }
+ 
+-    private int phoneIdForRequest(NetworkRequest netRequest) {
++    protected int phoneIdForRequest(NetworkRequest netRequest) {
+         int subId = getSubIdFromNetworkSpecifier(netRequest.getNetworkSpecifier());
+ 
+         if (subId == DEFAULT_SUBSCRIPTION_ID) return mPreferredDataPhoneId;
+diff --git a/src/java/com/android/internal/telephony/RIL.java b/src/java/com/android/internal/telephony/RIL.java
+index 3ef440f13..5ae507d03 100644
+--- a/src/java/com/android/internal/telephony/RIL.java
++++ b/src/java/com/android/internal/telephony/RIL.java
+@@ -253,7 +253,7 @@ public class RIL extends BaseCommands implements CommandsInterface {
+     Set<Integer> mDisabledOemHookServices = new HashSet();
+ 
+     /* default work source which will blame phone process */
+-    private WorkSource mRILDefaultWorkSource;
++    protected WorkSource mRILDefaultWorkSource;
+ 
+     /* Worksource containing all applications causing wakelock to be held */
+     private WorkSource mActiveWakelockWorkSource;
+@@ -430,7 +430,7 @@ public class RIL extends BaseCommands implements CommandsInterface {
+         }
+     }
+ 
+-    private synchronized void resetProxyAndRequestList() {
++    protected synchronized void resetProxyAndRequestList() {
+         mRadioProxy = null;
+         mOemHookProxy = null;
+ 
+@@ -735,7 +735,7 @@ public class RIL extends BaseCommands implements CommandsInterface {
+         return rr;
+     }
+ 
+-    private RILRequest obtainRequest(int request, Message result, WorkSource workSource,
++    protected RILRequest obtainRequest(int request, Message result, WorkSource workSource,
+             Object... args) {
+         RILRequest rr = RILRequest.obtain(request, result, workSource, args);
+         addRequest(rr);
+@@ -5542,6 +5542,15 @@ public class RIL extends BaseCommands implements CommandsInterface {
+         return rr;
+     }
+ 
++    protected Message getMessageFromRequest(Object request) {
++        RILRequest rr = (RILRequest)request;
++        Message result = null;
++        if (rr != null) {
++                result = rr.mResult;
++        }
++        return result;
++    }
++
+     /**
+      * This is a helper function to be called at the end of all RadioResponse callbacks.
+      * It takes care of sending error response, logging, decrementing wakelock if needed, and
+@@ -5596,6 +5605,11 @@ public class RIL extends BaseCommands implements CommandsInterface {
+         }
+     }
+ 
++    protected void processResponseDone(Object request, RadioResponseInfo responseInfo, Object ret) {
++        RILRequest rr = (RILRequest)request;
++        processResponseDone(rr, responseInfo, ret);
++    }
++
+     /**
+      * Function to send ack and acquire related wakelock
+      */
+diff --git a/src/java/com/android/internal/telephony/TelephonyComponentFactory.java b/src/java/com/android/internal/telephony/TelephonyComponentFactory.java
+index e9c15a168..504056db7 100644
+--- a/src/java/com/android/internal/telephony/TelephonyComponentFactory.java
++++ b/src/java/com/android/internal/telephony/TelephonyComponentFactory.java
+@@ -39,6 +39,7 @@ import com.android.internal.telephony.emergency.EmergencyNumberTracker;
+ import com.android.internal.telephony.imsphone.ImsExternalCallTracker;
+ import com.android.internal.telephony.imsphone.ImsPhone;
+ import com.android.internal.telephony.imsphone.ImsPhoneCallTracker;
++import com.android.internal.telephony.SubscriptionController;
+ import com.android.internal.telephony.nitz.NitzStateMachineImpl;
+ import com.android.internal.telephony.uicc.IccCardStatus;
+ import com.android.internal.telephony.uicc.UiccCard;
+@@ -47,6 +48,8 @@ import com.android.telephony.Rlog;
+ 
+ import dalvik.system.PathClassLoader;
+ 
++import java.lang.reflect.Constructor;
++
+ import org.xmlpull.v1.XmlPullParser;
+ import org.xmlpull.v1.XmlPullParserException;
+ 
+@@ -64,6 +67,7 @@ import java.util.stream.Collectors;
+  * this way makes it easier to mock them in tests.
+  */
+ public class TelephonyComponentFactory {
++    protected static String LOG_TAG = "TelephonyComponentFactory";
+ 
+     private static final String TAG = TelephonyComponentFactory.class.getSimpleName();
+ 
+@@ -269,18 +273,22 @@ public class TelephonyComponentFactory {
+     }
+ 
+     public GsmCdmaCallTracker makeGsmCdmaCallTracker(GsmCdmaPhone phone) {
++        Rlog.d(LOG_TAG, "makeGsmCdmaCallTracker");
+         return new GsmCdmaCallTracker(phone);
+     }
+ 
+     public SmsStorageMonitor makeSmsStorageMonitor(Phone phone) {
++        Rlog.d(LOG_TAG, "makeSmsStorageMonitor");
+         return new SmsStorageMonitor(phone);
+     }
+ 
+     public SmsUsageMonitor makeSmsUsageMonitor(Context context) {
++        Rlog.d(LOG_TAG, "makeSmsUsageMonitor");
+         return new SmsUsageMonitor(context);
+     }
+ 
+     public ServiceStateTracker makeServiceStateTracker(GsmCdmaPhone phone, CommandsInterface ci) {
++        Rlog.d(LOG_TAG, "makeServiceStateTracker");
+         return new ServiceStateTracker(phone, ci);
+     }
+ 
+@@ -321,10 +329,12 @@ public class TelephonyComponentFactory {
+     }
+ 
+     public IccPhoneBookInterfaceManager makeIccPhoneBookInterfaceManager(Phone phone) {
++        Rlog.d(LOG_TAG, "makeIccPhoneBookInterfaceManager");
+         return new IccPhoneBookInterfaceManager(phone);
+     }
+ 
+     public IccSmsInterfaceManager makeIccSmsInterfaceManager(Phone phone) {
++        Rlog.d(LOG_TAG, "makeIccSmsInterfaceManager");
+         return new IccSmsInterfaceManager(phone);
+     }
+ 
+@@ -337,10 +347,12 @@ public class TelephonyComponentFactory {
+     }
+ 
+     public EriManager makeEriManager(Phone phone, int eriFileSource) {
++        Rlog.d(LOG_TAG, "makeEriManager");
+         return new EriManager(phone, eriFileSource);
+     }
+ 
+     public WspTypeDecoder makeWspTypeDecoder(byte[] pdu) {
++        Rlog.d(LOG_TAG, "makeWspTypeDecoder");
+         return new WspTypeDecoder(pdu);
+     }
+ 
+@@ -350,6 +362,7 @@ public class TelephonyComponentFactory {
+     public InboundSmsTracker makeInboundSmsTracker(Context context, byte[] pdu, long timestamp,
+             int destPort, boolean is3gpp2, boolean is3gpp2WapPdu, String address,
+             String displayAddr, String messageBody, boolean isClass0, int subId) {
++        Rlog.d(LOG_TAG, "makeInboundSmsTracker");
+         return new InboundSmsTracker(context, pdu, timestamp, destPort, is3gpp2, is3gpp2WapPdu,
+                 address, displayAddr, messageBody, isClass0, subId);
+     }
+@@ -361,6 +374,7 @@ public class TelephonyComponentFactory {
+             int destPort, boolean is3gpp2, String address, String displayAddr, int referenceNumber,
+             int sequenceNumber, int messageCount, boolean is3gpp2WapPdu, String messageBody,
+             boolean isClass0, int subId) {
++        Rlog.d(LOG_TAG, "makeInboundSmsTracker");
+         return new InboundSmsTracker(context, pdu, timestamp, destPort, is3gpp2, address,
+                 displayAddr, referenceNumber, sequenceNumber, messageCount, is3gpp2WapPdu,
+                 messageBody, isClass0, subId);
+@@ -371,10 +385,12 @@ public class TelephonyComponentFactory {
+      */
+     public InboundSmsTracker makeInboundSmsTracker(Context context, Cursor cursor,
+             boolean isCurrentFormat3gpp2) {
++        Rlog.d(LOG_TAG, "makeInboundSmsTracker");
+         return new InboundSmsTracker(context, cursor, isCurrentFormat3gpp2);
+     }
+ 
+     public ImsPhoneCallTracker makeImsPhoneCallTracker(ImsPhone imsPhone) {
++        Rlog.d(LOG_TAG, "makeImsPhoneCallTracker");
+         return new ImsPhoneCallTracker(imsPhone);
+     }
+ 
+@@ -401,6 +417,7 @@ public class TelephonyComponentFactory {
+     public CdmaSubscriptionSourceManager
+     getCdmaSubscriptionSourceManagerInstance(Context context, CommandsInterface ci, Handler h,
+                                              int what, Object obj) {
++        Rlog.d(LOG_TAG, "getCdmaSubscriptionSourceManagerInstance");
+         return CdmaSubscriptionSourceManager.getInstance(context, ci, h, what, obj);
+     }
+ 
+@@ -416,6 +433,7 @@ public class TelephonyComponentFactory {
+     public Phone makePhone(Context context, CommandsInterface ci, PhoneNotifier notifier,
+             int phoneId, int precisePhoneType,
+             TelephonyComponentFactory telephonyComponentFactory) {
++        Rlog.d(LOG_TAG, "makePhone");
+         return new GsmCdmaPhone(context, ci, notifier, phoneId, precisePhoneType,
+                 telephonyComponentFactory);
+     }
+@@ -438,11 +456,29 @@ public class TelephonyComponentFactory {
+ 
+     public MultiSimSettingController initMultiSimSettingController(Context c,
+             SubscriptionController sc) {
++        Rlog.i(TAG, " initMultiSimSettingController ");
+         return MultiSimSettingController.init(c, sc);
+     }
+ 
+     public SubscriptionInfoUpdater makeSubscriptionInfoUpdater(Looper looper, Context context,
+             CommandsInterface[] ci) {
++        Rlog.i(TAG, "makeSubscriptionInfoUpdater");
+         return new SubscriptionInfoUpdater(looper, context, ci);
+     }
++
++    public RIL makeRIL(Context context, int preferredNetworkType,
++            int cdmaSubscription, Integer instanceId) {
++        Rlog.d(LOG_TAG, "makeRIL");
++        return new RIL(context, preferredNetworkType, cdmaSubscription, instanceId);
++    }
++
++    public void makeExtTelephonyClasses(Context context,
++            Phone[] phones, CommandsInterface[] commandsInterfaces) {
++        Rlog.d(LOG_TAG, "makeExtTelephonyClasses");
++    }
++
++    public CarrierInfoManager makeCarrierInfoManager(Phone phone) {
++        Rlog.i(TAG, " makeCarrierInfoManager ");
++        return new CarrierInfoManager();
++    }
+ }
+diff --git a/src/java/com/android/internal/telephony/dataconnection/DcTracker.java b/src/java/com/android/internal/telephony/dataconnection/DcTracker.java
+index 54cc65de8..12a097802 100644
+--- a/src/java/com/android/internal/telephony/dataconnection/DcTracker.java
++++ b/src/java/com/android/internal/telephony/dataconnection/DcTracker.java
+@@ -1261,6 +1261,10 @@ public class DcTracker extends Handler {
+         setupDataOnAllConnectableApns(Phone.REASON_DATA_ATTACHED, RetryFailures.ALWAYS);
+     }
+ 
++    protected boolean getAttachedStatus() {
++        return mAttached.get();
++    }
++
+     /**
+      * Check if it is allowed to make a data connection (without checking APN context specific
+      * conditions).
+@@ -1301,7 +1305,7 @@ public class DcTracker extends Handler {
+ 
+         // Step 1: Get all environment conditions.
+         final boolean internalDataEnabled = mDataEnabledSettings.isInternalDataEnabled();
+-        boolean attachedState = mAttached.get();
++        boolean attachedState = getAttachedStatus();
+         boolean desiredPowerState = mPhone.getServiceStateTracker().getDesiredPowerState();
+         boolean radioStateFromCarrier = mPhone.getServiceStateTracker().getPowerStateFromCarrier();
+         // TODO: Remove this hack added by ag/641832.
+@@ -1460,6 +1464,10 @@ public class DcTracker extends Handler {
+         ONLY_ON_CHANGE
+     };
+ 
++    protected void setupDataOnAllConnectableApns(String reason) {
++        setupDataOnAllConnectableApns(reason, RetryFailures.ALWAYS);
++    }
++
+     protected void setupDataOnAllConnectableApns(String reason, RetryFailures retryFailures) {
+         if (VDBG) log("setupDataOnAllConnectableApns: " + reason);
+ 
+diff --git a/src/java/com/android/internal/telephony/dataconnection/TelephonyNetworkFactory.java b/src/java/com/android/internal/telephony/dataconnection/TelephonyNetworkFactory.java
+index eff43408f..dbcb8aedc 100644
+--- a/src/java/com/android/internal/telephony/dataconnection/TelephonyNetworkFactory.java
++++ b/src/java/com/android/internal/telephony/dataconnection/TelephonyNetworkFactory.java
+@@ -89,7 +89,7 @@ public class TelephonyNetworkFactory extends NetworkFactory {
+     public final Handler mInternalHandler;
+ 
+ 
+-    public TelephonyNetworkFactory(Looper looper, Phone phone) {
++    public TelephonyNetworkFactory(Looper looper, Phone phone, PhoneSwitcher phoneSwitcher) {
+         super(looper, phone.getContext(), "TelephonyNetworkFactory[" + phone.getPhoneId()
+                 + "]", null);
+         mPhone = phone;
+@@ -101,7 +101,7 @@ public class TelephonyNetworkFactory extends NetworkFactory {
+         setCapabilityFilter(makeNetworkFilter(mSubscriptionController, mPhone.getPhoneId()));
+         setScoreFilter(TELEPHONY_NETWORK_SCORE);
+ 
+-        mPhoneSwitcher = PhoneSwitcher.getInstance();
++        mPhoneSwitcher = phoneSwitcher;
+         LOG_TAG = "TelephonyNetworkFactory[" + mPhone.getPhoneId() + "]";
+ 
+         mPhoneSwitcher.registerForActivePhoneSwitch(mInternalHandler, EVENT_ACTIVE_PHONE_SWITCH,
+diff --git a/tests/telephonytests/src/com/android/internal/telephony/dataconnection/TelephonyNetworkFactoryTest.java b/tests/telephonytests/src/com/android/internal/telephony/dataconnection/TelephonyNetworkFactoryTest.java
+index 0aa2a4d17..99947c3ee 100644
+--- a/tests/telephonytests/src/com/android/internal/telephony/dataconnection/TelephonyNetworkFactoryTest.java
++++ b/tests/telephonytests/src/com/android/internal/telephony/dataconnection/TelephonyNetworkFactoryTest.java
+@@ -173,7 +173,7 @@ public class TelephonyNetworkFactoryTest extends TelephonyTest {
+     private void createMockedTelephonyComponents() throws Exception {
+         replaceInstance(PhoneSwitcher.class, "sPhoneSwitcher", null, mPhoneSwitcher);
+ 
+-        mTelephonyNetworkFactoryUT = new TelephonyNetworkFactory(Looper.myLooper(), mPhone);
++        mTelephonyNetworkFactoryUT = new TelephonyNetworkFactory(Looper.myLooper(), mPhone, mPhoneSwitcher);
+         verify(mConnectivityManager).registerNetworkProvider(any());
+         verify(mPhoneSwitcher).registerForActivePhoneSwitch(any(), anyInt(), any());
+     }
+-- 
+2.31.1.606.gdf6c4f722c
+

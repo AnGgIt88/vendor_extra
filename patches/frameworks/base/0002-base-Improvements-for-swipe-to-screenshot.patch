@@ -1,0 +1,142 @@
+From 1799cbc3a2a18fe52170f364afec4707256c1d1a Mon Sep 17 00:00:00 2001
+From: Henrique Silva <jhenrique09.mcz@hotmail.com>
+Date: Tue, 7 May 2019 13:29:38 -0300
+Subject: [PATCH 02/23] base: Improvements for swipe to screenshot
+
+* Cancel touch events when tap with three fingers
+
+* Dyrex2004: Fix typos (Screnshot -> Screenshot)
+
+Signed-off-by: aswin7469 <aswinas@pixysos.com>
+Change-Id: I8b29c530df6baac3b540d2b9a6e3a7953bd1562b
+---
+ core/java/android/app/IActivityManager.aidl   |  5 +++
+ core/java/android/view/ViewRootImpl.java      | 14 +++++++
+ .../server/am/ActivityManagerService.java     | 41 +++++++++++++++++++
+ 3 files changed, 60 insertions(+)
+
+diff --git a/core/java/android/app/IActivityManager.aidl b/core/java/android/app/IActivityManager.aidl
+index 2fe7eea3b51..f2bf96b8cdd 100644
+--- a/core/java/android/app/IActivityManager.aidl
++++ b/core/java/android/app/IActivityManager.aidl
+@@ -693,4 +693,9 @@ interface IActivityManager {
+      * @param enable set it to true to enable the app freezer, false to disable it.
+      */
+     boolean enableAppFreezer(in boolean enable);
++
++    /**
++     *  Should disable touch if three fingers to screen shot is active?
++     */
++    boolean isSwipeToScreenshotGestureActive();
+ }
+diff --git a/core/java/android/view/ViewRootImpl.java b/core/java/android/view/ViewRootImpl.java
+index 18e9ef0e4d0..35a56a08ab3 100644
+--- a/core/java/android/view/ViewRootImpl.java
++++ b/core/java/android/view/ViewRootImpl.java
+@@ -6017,6 +6017,11 @@ public final class ViewRootImpl implements ViewParent,
+         private int processPointerEvent(QueuedInputEvent q) {
+             final MotionEvent event = (MotionEvent)q.mEvent;
+ 
++            if (event.getPointerCount() == 3 && isSwipeToScreenshotGestureActive()) {
++                event.setAction(MotionEvent.ACTION_CANCEL);
++                Log.d("teste", "canceling motionEvent because of threeGesture detecting");
++            }
++
+             mAttachInfo.mUnbufferedDispatchRequested = false;
+             mAttachInfo.mHandlingPointerEvent = true;
+             boolean handled = mView.dispatchPointerEvent(event);
+@@ -9864,4 +9869,13 @@ public final class ViewRootImpl implements ViewParent,
+     boolean isDrawingToBLASTTransaction() {
+         return mNextReportConsumeBLAST;
+     }
++
++    private boolean isSwipeToScreenshotGestureActive() {
++        try {
++            return ActivityManager.getService().isSwipeToScreenshotGestureActive();
++        } catch (RemoteException e) {
++            Log.e("teste", "isSwipeToScreenshotGestureActive exception", e);
++            return false;
++        }
++    }
+ }
+diff --git a/services/core/java/com/android/server/am/ActivityManagerService.java b/services/core/java/com/android/server/am/ActivityManagerService.java
+index 3f4878e3802..dd8c7bfc9c9 100644
+--- a/services/core/java/com/android/server/am/ActivityManagerService.java
++++ b/services/core/java/com/android/server/am/ActivityManagerService.java
+@@ -1672,6 +1672,10 @@ public class ActivityManagerService extends IActivityManager.Stub
+     private ParcelFileDescriptor[] mLifeMonitorFds;
+ 
+     static final HostingRecord sNullHostingRecord = new HostingRecord(null);
++
++    final SwipeToScreenshotObserver mSwipeToScreenshotObserver;
++    private boolean mIsSwipeToScreenshotEnabled;
++
+     /**
+      * Used to notify activity lifecycle events.
+      */
+@@ -2550,6 +2554,7 @@ public class ActivityManagerService extends IActivityManager.Stub
+         mUgmInternal = LocalServices.getService(UriGrantsManagerInternal.class);
+         mInternal = new LocalService();
+         mPendingStartActivityUids = new PendingStartActivityUids(mContext);
++        mSwipeToScreenshotObserver = null;
+     }
+ 
+     // Note: This method is invoked on the main thread but may need to attach various
+@@ -2708,6 +2713,7 @@ public class ActivityManagerService extends IActivityManager.Stub
+ 
+         mInternal = new LocalService();
+         mPendingStartActivityUids = new PendingStartActivityUids(mContext);
++        mSwipeToScreenshotObserver = new SwipeToScreenshotObserver(mHandler, mContext);
+     }
+ 
+     public void setSystemServiceManager(SystemServiceManager mgr) {
+@@ -9508,6 +9514,7 @@ public class ActivityManagerService extends IActivityManager.Stub
+             mWaitForNetworkTimeoutMs = waitForNetworkTimeoutMs;
+             mPssDeferralTime = pssDeferralMs;
+         }
++        mSwipeToScreenshotObserver.registerObserver();
+     }
+ 
+     /**
+@@ -20373,4 +20380,38 @@ public class ActivityManagerService extends IActivityManager.Stub
+             throw new SecurityException("Caller uid " + callerUid + " cannot set freezer state ");
+         }
+     }
++
++    private class SwipeToScreenshotObserver extends ContentObserver {
++
++        private final Context mContext;
++
++        public SwipeToScreenshotObserver(Handler handler, Context context) {
++            super(handler);
++            mContext = context;
++        }
++
++        public void registerObserver() {
++            mContext.getContentResolver().registerContentObserver(
++                    Settings.System.getUriFor(Settings.System.THREE_FINGER_GESTURE),
++                    false, this, UserHandle.USER_ALL);
++            update();
++        }
++
++        private void update() {
++            mIsSwipeToScreenshotEnabled = Settings.System.getIntForUser(mContext.getContentResolver(),
++                    Settings.System.THREE_FINGER_GESTURE, 0, UserHandle.USER_CURRENT) == 1;
++        }
++
++        public void onChange(boolean selfChange) {
++            update();
++        }
++    }
++
++    @Override
++    public boolean isSwipeToScreenshotGestureActive() {
++        synchronized (this) {
++            return mIsSwipeToScreenshotEnabled;
++        }
++    }
++
+ }
+-- 
+2.31.1.606.gdf6c4f722c
+

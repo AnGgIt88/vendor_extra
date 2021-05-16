@@ -1,0 +1,50 @@
+From 4f60b1ca9ca56b97779202ecd6e9ede974fecd77 Mon Sep 17 00:00:00 2001
+From: Pulkit077 <pulkitagarwal2k1@gmail.com>
+Date: Wed, 6 Jan 2021 08:29:19 +0530
+Subject: [PATCH 2/4] Revert "Updater: Retrieve recovery update setting using
+ the prop itself"
+
+This reverts commit 9689a6b8bbea18db4e5b7a31a455c93a6f35ceaf.
+---
+ src/org/lineageos/updater/UpdatesActivity.java | 5 +++--
+ src/org/lineageos/updater/misc/Constants.java  | 1 +
+ 2 files changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/src/org/lineageos/updater/UpdatesActivity.java b/src/org/lineageos/updater/UpdatesActivity.java
+index 6e93153..df9a8fd 100644
+--- a/src/org/lineageos/updater/UpdatesActivity.java
++++ b/src/org/lineageos/updater/UpdatesActivity.java
+@@ -434,8 +434,7 @@ public class UpdatesActivity extends UpdatesListActivity {
+             // Might be the case of A-only devices using prebuilt vendor images.
+             updateRecovery.setVisibility(View.GONE);
+         } else if (Utils.isRecoveryUpdateExecPresent()) {
+-            updateRecovery.setChecked(
+-                    SystemProperties.getBoolean(Constants.UPDATE_RECOVERY_PROPERTY, false));
++            updateRecovery.setChecked(prefs.getBoolean(Constants.PREF_UPDATE_RECOVERY, false));
+         } else {
+             // There is no recovery updater script in the device, so the feature is considered
+             // forcefully enabled, just to avoid users to be confused and complain that
+@@ -470,6 +469,8 @@ public class UpdatesActivity extends UpdatesListActivity {
+                                     dataWarning.isChecked())
+                             .putBoolean(Constants.PREF_AB_PERF_MODE,
+                                     abPerfMode.isChecked())
++                            .putBoolean(Constants.PREF_UPDATE_RECOVERY,
++                                    updateRecovery.isChecked())
+                             .apply();
+ 
+                     if (Utils.isUpdateCheckEnabled(this)) {
+diff --git a/src/org/lineageos/updater/misc/Constants.java b/src/org/lineageos/updater/misc/Constants.java
+index 0597eab..5e1cc8b 100644
+--- a/src/org/lineageos/updater/misc/Constants.java
++++ b/src/org/lineageos/updater/misc/Constants.java
+@@ -34,6 +34,7 @@ public final class Constants {
+     public static final String PREF_AB_PERF_MODE = "ab_perf_mode";
+     public static final String PREF_MOBILE_DATA_WARNING = "pref_mobile_data_warning";
+     public static final String PREF_NEEDS_REBOOT_ID = "needs_reboot_id";
++    public static final String PREF_UPDATE_RECOVERY = "update_recovery";
+ 
+     public static final String UNCRYPT_FILE_EXT = ".uncrypt";
+ 
+-- 
+2.31.1.606.gdf6c4f722c
+

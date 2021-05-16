@@ -1,0 +1,210 @@
+From 2eec7aafd5af9b36c42338958978aadcf15d04ca Mon Sep 17 00:00:00 2001
+From: Sneh Bansal <snehb@codeaurora.org>
+Date: Fri, 19 Jan 2018 17:18:32 +0530
+Subject: [PATCH 01/10] Enable vendor Telephony plugin: MSIM Changes
+
+MSIM Changes that are needed to enable vendor telephony framework.
+
+[Pig]: Update to LA.QSSI.11.0.r1-06700-qssi.0
+
+CRs-Fixed: 2172757
+Change-Id: I80a46de96c34d5e2a4ce952830f6beb862522de5
+---
+ .../com/android/internal/telephony/Phone.java | 12 +++---
+ .../telephony/ServiceStateTracker.java        |  2 +-
+ .../telephony/SubscriptionController.java     | 41 +++++++++++++++----
+ .../telephony/dataconnection/DcTracker.java   |  2 +-
+ 4 files changed, 40 insertions(+), 17 deletions(-)
+
+diff --git a/src/java/com/android/internal/telephony/Phone.java b/src/java/com/android/internal/telephony/Phone.java
+index 8bb388fe8..38ad222d5 100644
+--- a/src/java/com/android/internal/telephony/Phone.java
++++ b/src/java/com/android/internal/telephony/Phone.java
+@@ -330,7 +330,7 @@ public abstract class Phone extends Handler implements PhoneInternalInterface {
+     @UnsupportedAppUsage
+     protected Phone mImsPhone = null;
+ 
+-    private final AtomicReference<RadioCapability> mRadioCapability =
++    protected final AtomicReference<RadioCapability> mRadioCapability =
+             new AtomicReference<RadioCapability>();
+ 
+     private static final int DEFAULT_REPORT_INTERVAL_MS = 200;
+@@ -1450,7 +1450,7 @@ public abstract class Phone extends Handler implements PhoneInternalInterface {
+ 
+     private void updateSavedNetworkOperator(NetworkSelectMessage nsm) {
+         int subId = getSubId();
+-        if (SubscriptionManager.isValidSubscriptionId(subId)) {
++        if (SubscriptionController.getInstance().isActiveSubId(subId)) {
+             // open the shared preferences editor, and write the value.
+             // nsm.operatorNumeric is "" if we're in automatic.selection.
+             SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getContext());
+@@ -2015,7 +2015,7 @@ public abstract class Phone extends Handler implements PhoneInternalInterface {
+     private int getCallForwardingIndicatorFromSharedPref() {
+         int status = IccRecords.CALL_FORWARDING_STATUS_DISABLED;
+         int subId = getSubId();
+-        if (SubscriptionManager.isValidSubscriptionId(subId)) {
++        if (SubscriptionController.getInstance().isActiveSubId(subId)) {
+             SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(mContext);
+             status = sp.getInt(CF_STATUS + subId, IccRecords.CALL_FORWARDING_STATUS_UNKNOWN);
+             Rlog.d(LOG_TAG, "getCallForwardingIndicatorFromSharedPref: for subId " + subId + "= " +
+@@ -2776,7 +2776,7 @@ public abstract class Phone extends Handler implements PhoneInternalInterface {
+     public void setVoiceMessageCount(int countWaiting) {
+         mVmCount = countWaiting;
+         int subId = getSubId();
+-        if (SubscriptionManager.isValidSubscriptionId(subId)) {
++        if (SubscriptionController.getInstance().isActiveSubId(subId)) {
+ 
+             Rlog.d(LOG_TAG, "setVoiceMessageCount: Storing Voice Mail Count = " + countWaiting +
+                     " for mVmCountKey = " + VM_COUNT + subId + " in preferences.");
+@@ -2805,7 +2805,7 @@ public abstract class Phone extends Handler implements PhoneInternalInterface {
+     protected int getStoredVoiceMessageCount() {
+         int countVoiceMessages = 0;
+         int subId = getSubId();
+-        if (SubscriptionManager.isValidSubscriptionId(subId)) {
++        if (SubscriptionController.getInstance().isActiveSubId(subId)) {
+             int invalidCount = -2;  //-1 is not really invalid. It is used for unknown number of vm
+             SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(mContext);
+             int countFromSP = sp.getInt(VM_COUNT + subId, invalidCount);
+@@ -4071,7 +4071,7 @@ public abstract class Phone extends Handler implements PhoneInternalInterface {
+ 
+     protected void setPreferredNetworkTypeIfSimLoaded() {
+         int subId = getSubId();
+-        if (SubscriptionManager.isValidSubscriptionId(subId)) {
++        if (SubscriptionManager.from(mContext).isActiveSubId(subId)) {
+             int type = PhoneFactory.calculatePreferredNetworkType(mContext, getSubId());
+             setPreferredNetworkType(type, null);
+         }
+diff --git a/src/java/com/android/internal/telephony/ServiceStateTracker.java b/src/java/com/android/internal/telephony/ServiceStateTracker.java
+index 4e9217a2f..b3a3bd14b 100755
+--- a/src/java/com/android/internal/telephony/ServiceStateTracker.java
++++ b/src/java/com/android/internal/telephony/ServiceStateTracker.java
+@@ -388,7 +388,7 @@ public class ServiceStateTracker extends Handler {
+             int subId = mPhone.getSubId();
+             ServiceStateTracker.this.mPrevSubId = mPreviousSubId.get();
+             if (mPreviousSubId.getAndSet(subId) != subId) {
+-                if (SubscriptionManager.isValidSubscriptionId(subId)) {
++                if (mSubscriptionController.isActiveSubId(subId)) {
+                     Context context = mPhone.getContext();
+ 
+                     mPhone.notifyPhoneStateChanged();
+diff --git a/src/java/com/android/internal/telephony/SubscriptionController.java b/src/java/com/android/internal/telephony/SubscriptionController.java
+index c0939f1c1..b42e94b8a 100644
+--- a/src/java/com/android/internal/telephony/SubscriptionController.java
++++ b/src/java/com/android/internal/telephony/SubscriptionController.java
+@@ -110,8 +110,8 @@ import java.util.stream.Collectors;
+  */
+ public class SubscriptionController extends ISub.Stub {
+     private static final String LOG_TAG = "SubscriptionController";
+-    private static final boolean DBG = true;
+-    private static final boolean VDBG = Rlog.isLoggable(LOG_TAG, Log.VERBOSE);
++    protected static final boolean DBG = true;
++    protected static final boolean VDBG = Rlog.isLoggable(LOG_TAG, Log.VERBOSE);
+     private static final boolean DBG_CACHE = false;
+     private static final int DEPRECATED_SETTING = -1;
+     private static final ParcelUuid INVALID_GROUP_UUID =
+@@ -276,7 +276,7 @@ public class SubscriptionController extends ISub.Stub {
+     };
+ 
+     @UnsupportedAppUsage
+-    private static int mDefaultPhoneId = SubscriptionManager.DEFAULT_PHONE_INDEX;
++    protected static int mDefaultPhoneId = SubscriptionManager.DEFAULT_PHONE_INDEX;
+ 
+     @UnsupportedAppUsage
+     private int[] colorArr;
+@@ -1398,7 +1398,7 @@ public class SubscriptionController extends ISub.Stub {
+                             // Set the default sub if not set or if single sim device
+                             if (!isSubscriptionForRemoteSim(subscriptionType)) {
+                                 if (!SubscriptionManager.isValidSubscriptionId(defaultSubId)
+-                                        || subIdCountMax == 1) {
++                                        || subIdCountMax == 1 || (!isActiveSubId(defaultSubId))) {
+                                     logdl("setting default fallback subid to " + subId);
+                                     setDefaultFallbackSubId(subId, subscriptionType);
+                                 }
+@@ -2473,12 +2473,12 @@ public class SubscriptionController extends ISub.Stub {
+         }
+     }
+ 
+-    private void logvl(String msg) {
++    protected void logvl(String msg) {
+         logv(msg);
+         mLocalLog.log(msg);
+     }
+ 
+-    private void logv(String msg) {
++    protected void logv(String msg) {
+         Rlog.v(LOG_TAG, msg);
+     }
+ 
+@@ -2493,7 +2493,7 @@ public class SubscriptionController extends ISub.Stub {
+         Rlog.d(LOG_TAG, msg);
+     }
+ 
+-    private void logel(String msg) {
++    protected void logel(String msg) {
+         loge(msg);
+         mLocalLog.log(msg);
+     }
+@@ -2679,7 +2679,7 @@ public class SubscriptionController extends ISub.Stub {
+     }
+ 
+     @UnsupportedAppUsage
+-    private void broadcastDefaultDataSubIdChanged(int subId) {
++    protected void broadcastDefaultDataSubIdChanged(int subId) {
+         // Broadcast an Intent for default data sub change
+         if (DBG) logdl("[broadcastDefaultDataSubIdChanged] subId=" + subId);
+         Intent intent = new Intent(TelephonyIntents.ACTION_DEFAULT_DATA_SUBSCRIPTION_CHANGED);
+@@ -2740,6 +2740,29 @@ public class SubscriptionController extends ISub.Stub {
+         mContext.sendStickyBroadcastAsUser(intent, UserHandle.ALL);
+     }
+ 
++    protected boolean shouldDefaultBeCleared(List<SubscriptionInfo> records, int subId) {
++        if (DBG) logdl("[shouldDefaultBeCleared: subId] " + subId);
++        if (records == null) {
++            if (DBG) logdl("[shouldDefaultBeCleared] return true no records subId=" + subId);
++            return true;
++        }
++        if (!SubscriptionManager.isValidSubscriptionId(subId)) {
++            // If the subId parameter is not valid its already cleared so return false.
++            if (DBG) logdl("[shouldDefaultBeCleared] return false only one subId, subId=" + subId);
++            return false;
++        }
++        for (SubscriptionInfo record : records) {
++            int id = record.getSubscriptionId();
++            if (DBG) logdl("[shouldDefaultBeCleared] Record.id: " + id);
++            if (id == subId) {
++                logdl("[shouldDefaultBeCleared] return false subId is active, subId=" + subId);
++                return false;
++            }
++        }
++        if (DBG) logdl("[shouldDefaultBeCleared] return true not active subId=" + subId);
++        return true;
++    }
++
+     /**
+      * Whether a subscription is opportunistic or not.
+      */
+@@ -3076,7 +3099,7 @@ public class SubscriptionController extends ISub.Stub {
+         return resultValue;
+     }
+ 
+-    private void printStackTrace(String msg) {
++    protected void printStackTrace(String msg) {
+         RuntimeException re = new RuntimeException();
+         logd("StackTrace - " + msg);
+         StackTraceElement[] st = re.getStackTrace();
+diff --git a/src/java/com/android/internal/telephony/dataconnection/DcTracker.java b/src/java/com/android/internal/telephony/dataconnection/DcTracker.java
+index b56ee9d63..54cc65de8 100644
+--- a/src/java/com/android/internal/telephony/dataconnection/DcTracker.java
++++ b/src/java/com/android/internal/telephony/dataconnection/DcTracker.java
+@@ -501,7 +501,7 @@ public class DcTracker extends Handler {
+         String apnType = apnContextforRetry.getApnType();
+         String reason =  apnContextforRetry.getReason();
+ 
+-        if (!SubscriptionManager.isValidSubscriptionId(subId) || (subId != phoneSubId)) {
++        if ((subId != phoneSubId)) {
+             log("onDataReconnect: invalid subId");
+             return;
+         }
+-- 
+2.31.1.606.gdf6c4f722c
+

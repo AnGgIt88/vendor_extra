@@ -1,0 +1,39 @@
+From 0d8fe734104ace9eb740aa0ff29a4e92f9d4142c Mon Sep 17 00:00:00 2001
+From: DennySPb <dennyspb@gmail.com>
+Date: Wed, 25 Nov 2020 09:24:20 +0300
+Subject: [PATCH 06/23] ThreeFingerScreenshot: Use screenshot api to take full
+ screenshot
+
+Fixes issue when partial screenshot was fired before
+
+Signed-off-by: DennySPb <dennyspb@gmail.com>
+Change-Id: I7f17ffa14d9ac165dba18f0ff3b3ab947f7d3290
+---
+ .../java/com/android/server/policy/PhoneWindowManager.java   | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/services/core/java/com/android/server/policy/PhoneWindowManager.java b/services/core/java/com/android/server/policy/PhoneWindowManager.java
+index 2de15fd4a39..cfdb0375c9e 100644
+--- a/services/core/java/com/android/server/policy/PhoneWindowManager.java
++++ b/services/core/java/com/android/server/policy/PhoneWindowManager.java
+@@ -2056,14 +2056,15 @@ public class PhoneWindowManager implements WindowManagerPolicy {
+             mBurnInProtectionHelper = new BurnInProtectionHelper(
+                     context, minHorizontal, maxHorizontal, minVertical, maxVertical, maxRadius);
+         }
+-
+         mHandler = new PolicyHandler();
++
+         mSwipeToScreenshot = new SwipeToScreenshotListener(context, new SwipeToScreenshotListener.Callbacks() {
+             @Override
+             public void onSwipeThreeFinger() {
+-                mHandler.post(mScreenshotRunnable);
++                kekUtils.takeScreenshot(true);
+             }
+         });
++
+         mWakeGestureListener = new MyWakeGestureListener(mContext, mHandler);
+         mSettingsObserver = new SettingsObserver(mHandler);
+ 
+-- 
+2.31.1.606.gdf6c4f722c
+

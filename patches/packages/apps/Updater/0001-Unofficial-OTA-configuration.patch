@@ -1,0 +1,52 @@
+From 08254fc7ee1433ab88fc4bf8d3e8ecf7ab73c238 Mon Sep 17 00:00:00 2001
+From: David Trpchevski <trpcevski.david@gmail.com>
+Date: Sun, 13 Dec 2020 01:08:45 +0600
+Subject: [PATCH 1/4] Unofficial OTA configuration
+
+Change-Id: Ia66107a1fa1b6cfab81849265a664c73df711bae
+Signed-off-by: David Trpchevski <trpcevski.david@gmail.com>
+---
+ res/values/strings.xml                    | 4 ++--
+ src/org/lineageos/updater/misc/Utils.java | 4 +---
+ 2 files changed, 3 insertions(+), 5 deletions(-)
+
+diff --git a/res/values/strings.xml b/res/values/strings.xml
+index a94e8a3..9fd5eb9 100644
+--- a/res/values/strings.xml
++++ b/res/values/strings.xml
+@@ -32,7 +32,7 @@
+           {type} - Build type
+           {incr} - Incremental version
+     -->
+-    <string name="updater_server_url" translatable="false">https://download.lineageos.org/api/v1/{device}/{type}/{incr}</string>
++    <string name="updater_server_url" translatable="false">https://raw.githubusercontent.com/Pulkit077/OTA/lineage-18.1/rosy.json</string>
+ 
+     <string name="verification_failed_notification">Verification failed</string>
+     <string name="verifying_download_notification">Verifying update</string>
+@@ -75,7 +75,7 @@
+     <string name="menu_copy_url">Copy URL</string>
+     <string name="menu_export_update">Export update</string>
+     <string name="menu_show_changelog">Show changelog</string>
+-    <string name="menu_changelog_url" translatable="false">https://download.lineageos.org/<xliff:g id="device_name">%1$s</xliff:g>/changes</string>
++    <string name="menu_changelog_url" translatable="false">https://raw.githubusercontent.com/Pulkit077/OTA/lineage-18.1/changelog.txt</string>
+     <string name="menu_ab_perf_mode">Prioritize update process</string>
+     <string name="menu_update_recovery">Update recovery</string>
+     <string name="toast_forced_update_recovery">It is impossible to disable Lineage Recovery updates on this device.</string>
+diff --git a/src/org/lineageos/updater/misc/Utils.java b/src/org/lineageos/updater/misc/Utils.java
+index 0aa5fd5..e61604e 100644
+--- a/src/org/lineageos/updater/misc/Utils.java
++++ b/src/org/lineageos/updater/misc/Utils.java
+@@ -161,9 +161,7 @@ public class Utils {
+             serverUrl = context.getString(R.string.updater_server_url);
+         }
+ 
+-        return serverUrl.replace("{device}", device)
+-                .replace("{type}", type)
+-                .replace("{incr}", incrementalVersion);
++        return serverUrl;
+     }
+ 
+     public static String getUpgradeBlockedURL(Context context) {
+-- 
+2.31.1.606.gdf6c4f722c
+
