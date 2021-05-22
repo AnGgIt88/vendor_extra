@@ -1,0 +1,139 @@
+From 4249fc73b84761658e56957f6eba54cbc5adda9b Mon Sep 17 00:00:00 2001
+From: Danny Lin <danny@kdrag0n.dev>
+Date: Wed, 14 Apr 2021 01:46:21 -0700
+Subject: [PATCH 12/14] blur: Interpolate tap UV coordinates in vertex shader
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Instead of calculating the UV coordinate to sample for each blur tap in
+the vertex shader, calculate them as varying attributes in the vertex
+shader and let the GPU interpolate them for each fragment. This allows
+the GPU to prefetch pixel data because we no longer rely on dependent
+texture reads.
+
+When tested with 2 layers of another 6-pass blur implementation, this
+saves ~100 µs of rendering time on an Adreno 640 GPU at 1440x3040
+resolution.
+
+Change-Id: Id2a700decef060ea23d1d5e2cccaea864581bf16
+---
+ libs/renderengine/gl/filters/BlurFilter.cpp | 41 ++++++++++++++++-----
+ libs/renderengine/gl/filters/BlurFilter.h   |  5 ++-
+ 2 files changed, 35 insertions(+), 11 deletions(-)
+
+diff --git a/libs/renderengine/gl/filters/BlurFilter.cpp b/libs/renderengine/gl/filters/BlurFilter.cpp
+index f8e40a1a2..9b13e9d5b 100644
+--- a/libs/renderengine/gl/filters/BlurFilter.cpp
++++ b/libs/renderengine/gl/filters/BlurFilter.cpp
+@@ -40,7 +40,7 @@ BlurFilter::BlurFilter(GLESRenderEngine& engine)
+         mMixProgram(engine),
+         mDitherMixProgram(engine),
+         mBlurProgram(engine) {
+-    mMixProgram.compile(getVertexShader(), getMixFragShader());
++    mMixProgram.compile(getMixVertShader(), getMixFragShader());
+     mMPosLoc = mMixProgram.getAttributeLocation("aPosition");
+     mMUvLoc = mMixProgram.getAttributeLocation("aUV");
+     mMBlurTextureLoc = mMixProgram.getUniformLocation("uBlurTexture");
+@@ -59,7 +59,7 @@ BlurFilter::BlurFilter(GLESRenderEngine& engine)
+                                GL_NEAREST, GL_REPEAT,
+                                GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE);
+ 
+-    mBlurProgram.compile(getVertexShader(), getFragmentShader());
++    mBlurProgram.compile(getBlurVertShader(), getBlurFragShader());
+     mBPosLoc = mBlurProgram.getAttributeLocation("aPosition");
+     mBUvLoc = mBlurProgram.getAttributeLocation("aUV");
+     mBTextureLoc = mBlurProgram.getUniformLocation("uTexture");
+@@ -248,43 +248,66 @@ status_t BlurFilter::render(size_t layers, int currentLayer) {
+     return NO_ERROR;
+ }
+ 
+-string BlurFilter::getVertexShader() const {
++string BlurFilter::getBlurVertShader() const {
+     return R"SHADER(#version 310 es
+         precision mediump float;
+ 
++        uniform vec2 uOffset;
++
+         in vec2 aPosition;
+         in vec2 aUV;
+         out vec2 vUV;
++        out vec2 vBlurTaps[4];
+ 
+         void main() {
+             vUV = aUV;
+             gl_Position = vec4(aPosition, 0.0, 1.0);
++
++            vBlurTaps[0] = vUV + vec2( uOffset.x,  uOffset.y);
++            vBlurTaps[1] = vUV + vec2( uOffset.x, -uOffset.y);
++            vBlurTaps[2] = vUV + vec2(-uOffset.x,  uOffset.y);
++            vBlurTaps[3] = vUV + vec2(-uOffset.x, -uOffset.y);
+         }
+     )SHADER";
+ }
+ 
+-string BlurFilter::getFragmentShader() const {
++string BlurFilter::getBlurFragShader() const {
+     return R"SHADER(#version 310 es
+         precision mediump float;
+ 
+         uniform sampler2D uTexture;
+-        uniform vec2 uOffset;
+ 
+         in vec2 vUV;
++        in vec2 vBlurTaps[4];
+         out vec4 fragColor;
+ 
+         void main() {
+             vec3 sum = texture(uTexture, vUV).rgb;
+-            sum += texture(uTexture, vUV + vec2( uOffset.x,  uOffset.y)).rgb;
+-            sum += texture(uTexture, vUV + vec2( uOffset.x, -uOffset.y)).rgb;
+-            sum += texture(uTexture, vUV + vec2(-uOffset.x,  uOffset.y)).rgb;
+-            sum += texture(uTexture, vUV + vec2(-uOffset.x, -uOffset.y)).rgb;
++            sum += texture(uTexture, vBlurTaps[0]).rgb;
++            sum += texture(uTexture, vBlurTaps[1]).rgb;
++            sum += texture(uTexture, vBlurTaps[2]).rgb;
++            sum += texture(uTexture, vBlurTaps[3]).rgb;
+ 
+             fragColor = vec4(sum * 0.2, 1.0);
+         }
+     )SHADER";
+ }
+ 
++string BlurFilter::getMixVertShader() const {
++    return R"SHADER(#version 310 es
++        precision mediump float;
++
++        in vec2 aPosition;
++        in vec2 aUV;
++        out vec2 vUV;
++
++        void main() {
++            vUV = aUV;
++            gl_Position = vec4(aPosition, 0.0, 1.0);
++        }
++    )SHADER";
++}
++
+ string BlurFilter::getMixFragShader() const {
+     string shader = R"SHADER(#version 310 es
+         precision mediump float;
+diff --git a/libs/renderengine/gl/filters/BlurFilter.h b/libs/renderengine/gl/filters/BlurFilter.h
+index cf13dd4b4..e3c7e6878 100644
+--- a/libs/renderengine/gl/filters/BlurFilter.h
++++ b/libs/renderengine/gl/filters/BlurFilter.h
+@@ -56,8 +56,9 @@ public:
+ private:
+     uint32_t mRadius;
+     void drawMesh(GLuint uv, GLuint position);
+-    string getVertexShader() const;
+-    string getFragmentShader() const;
++    string getBlurVertShader() const;
++    string getBlurFragShader() const;
++    string getMixVertShader() const;
+     string getMixFragShader() const;
+     string getDitherMixVertShader() const;
+     string getDitherMixFragShader() const;
+-- 
+2.31.1.606.gdf6c4f722c
+

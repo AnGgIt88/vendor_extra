@@ -1,0 +1,67 @@
+From 85d3752b0757f47f7dc6e691733a3be2ebad15c8 Mon Sep 17 00:00:00 2001
+From: Danny Lin <danny@kdrag0n.dev>
+Date: Wed, 14 Apr 2021 01:37:56 -0700
+Subject: [PATCH 11/14] blur: Reduce floating-point precision for UV
+ coordinates
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+While blur rendering is mostly memory-bound, reducing ALU utilization is
+still helpful. This doesn't result in any noticeable artifacts in the
+blurred image.
+
+When tested with 2 layers of another 6-pass blur implementation, this
+saves ~50 µs of rendering time on an Adreno 640 GPU at 1440x3040
+resolution.
+
+Change-Id: I09798e0d98665b92771e601704653609a240c065
+---
+ libs/renderengine/gl/filters/BlurFilter.cpp | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/libs/renderengine/gl/filters/BlurFilter.cpp b/libs/renderengine/gl/filters/BlurFilter.cpp
+index ff1b93ea2..f8e40a1a2 100644
+--- a/libs/renderengine/gl/filters/BlurFilter.cpp
++++ b/libs/renderengine/gl/filters/BlurFilter.cpp
+@@ -253,8 +253,8 @@ string BlurFilter::getVertexShader() const {
+         precision mediump float;
+ 
+         in vec2 aPosition;
+-        in highp vec2 aUV;
+-        out highp vec2 vUV;
++        in vec2 aUV;
++        out vec2 vUV;
+ 
+         void main() {
+             vUV = aUV;
+@@ -270,7 +270,7 @@ string BlurFilter::getFragmentShader() const {
+         uniform sampler2D uTexture;
+         uniform vec2 uOffset;
+ 
+-        in highp vec2 vUV;
++        in vec2 vUV;
+         out vec4 fragColor;
+ 
+         void main() {
+@@ -289,7 +289,7 @@ string BlurFilter::getMixFragShader() const {
+     string shader = R"SHADER(#version 310 es
+         precision mediump float;
+ 
+-        in highp vec2 vUV;
++        in vec2 vUV;
+         out vec4 fragColor;
+ 
+         uniform sampler2D uCompositionTexture;
+@@ -328,7 +328,7 @@ string BlurFilter::getDitherMixFragShader() const {
+     return R"SHADER(#version 310 es
+         precision mediump float;
+ 
+-        in highp vec2 vUV;
++        in vec2 vUV;
+         in vec2 vNoiseUV;
+         out vec4 fragColor;
+ 
+-- 
+2.31.1.606.gdf6c4f722c
+

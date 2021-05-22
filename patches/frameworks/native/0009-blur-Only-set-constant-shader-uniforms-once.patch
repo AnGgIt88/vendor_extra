@@ -1,0 +1,65 @@
+From 5223d90ac401010fe3295c2582873a6a5631d997 Mon Sep 17 00:00:00 2001
+From: Danny Lin <danny@kdrag0n.dev>
+Date: Mon, 12 Apr 2021 21:46:31 -0700
+Subject: [PATCH 09/14] blur: Only set constant shader uniforms once
+
+The values of the 2D texture sampler uniforms never change, so set them
+when initializing the BlurFilter instance instead of updating them every
+frame. This reduces clutter in the rendering path and results in a
+negligible performance gain from reducing API overhead.
+
+Change-Id: I335ea0dbdd2d4409ea71b58b7c7f8b87b04a18d7
+---
+ libs/renderengine/gl/filters/BlurFilter.cpp | 18 ++++++++++++------
+ 1 file changed, 12 insertions(+), 6 deletions(-)
+
+diff --git a/libs/renderengine/gl/filters/BlurFilter.cpp b/libs/renderengine/gl/filters/BlurFilter.cpp
+index 692583bd3..0ff1f3df1 100644
+--- a/libs/renderengine/gl/filters/BlurFilter.cpp
++++ b/libs/renderengine/gl/filters/BlurFilter.cpp
+@@ -65,6 +65,18 @@ BlurFilter::BlurFilter(GLESRenderEngine& engine)
+     mBTextureLoc = mBlurProgram.getUniformLocation("uTexture");
+     mBOffsetLoc = mBlurProgram.getUniformLocation("uOffset");
+ 
++    // Initialize constant shader uniforms
++    mMixProgram.useProgram();
++    glUniform1i(mMBlurTextureLoc, 0);
++    glUniform1i(mMCompositionTextureLoc, 1);
++    mDitherMixProgram.useProgram();
++    glUniform1i(mDBlurTextureLoc, 0);
++    glUniform1i(mDCompositionTextureLoc, 1);
++    glUniform1i(mDDitherTextureLoc, 2);
++    mBlurProgram.useProgram();
++    glUniform1i(mBTextureLoc, 0);
++    glUseProgram(0);
++
+     static constexpr auto size = 2.0f;
+     static constexpr auto translation = 1.0f;
+     const GLfloat vboData[] = {
+@@ -168,7 +180,6 @@ status_t BlurFilter::prepare() {
+     // Let's start by downsampling and blurring the composited frame simultaneously.
+     mBlurProgram.useProgram();
+     glActiveTexture(GL_TEXTURE0);
+-    glUniform1i(mBTextureLoc, 0);
+     glBindTexture(GL_TEXTURE_2D, mCompositionFbo.getTextureName());
+     glUniform2f(mBOffsetLoc, stepX, stepY);
+     glViewport(0, 0, mPingFbo.getBufferWidth(), mPingFbo.getBufferHeight());
+@@ -223,15 +234,10 @@ status_t BlurFilter::render(size_t layers, int currentLayer) {
+     if (currentLayer == layers - 1) {
+         mDitherMixProgram.useProgram();
+         glUniform1f(mDBlurOpacityLoc, opacity);
+-        glUniform1i(mDBlurTextureLoc, 0);
+-        glUniform1i(mDCompositionTextureLoc, 1);
+-        glUniform1i(mDDitherTextureLoc, 2);
+         drawMesh(mDUvLoc, mDPosLoc);
+     } else {
+         mMixProgram.useProgram();
+         glUniform1f(mMBlurOpacityLoc, opacity);
+-        glUniform1i(mMBlurTextureLoc, 0);
+-        glUniform1i(mMCompositionTextureLoc, 1);
+         drawMesh(mMUvLoc, mMPosLoc);
+     }
+ 
+-- 
+2.31.1.606.gdf6c4f722c
+

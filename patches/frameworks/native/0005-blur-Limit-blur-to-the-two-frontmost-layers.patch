@@ -1,0 +1,37 @@
+From ef929138beec4d14ddeb579a6a9c441d4b20709d Mon Sep 17 00:00:00 2001
+From: Danny Lin <danny@kdrag0n.dev>
+Date: Sun, 11 Apr 2021 16:35:08 -0700
+Subject: [PATCH 05/14] blur: Limit blur to the two frontmost layers
+
+Rendering 3 or more layers of blur on top of each other makes little to
+no visual difference in the final result, but it comes at a big
+performance penalty. Only blurring the two frontmost layers saves a lot
+of GPU time with minimal difference in output quality.
+
+Change-Id: I9ec8129751a183db00ad200080207434f086a63e
+---
+ libs/renderengine/gl/GLESRenderEngine.cpp | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/libs/renderengine/gl/GLESRenderEngine.cpp b/libs/renderengine/gl/GLESRenderEngine.cpp
+index 0285c2f6f..04568de87 100644
+--- a/libs/renderengine/gl/GLESRenderEngine.cpp
++++ b/libs/renderengine/gl/GLESRenderEngine.cpp
+@@ -1062,6 +1062,14 @@ status_t GLESRenderEngine::drawLayers(const DisplaySettings& display,
+             }
+         }
+     }
++
++    // Limit blur to the two frontmost layers for performance. We need one at the front
++    // and one behind for cross-fading and additional blurring. Rendering additional layers
++    // comes at a big performance penalty and makes little to no noticeable difference.
++    while (blurLayers.size() > 2) {
++        blurLayers.pop_front();
++    }
++
+     const auto blurLayersSize = blurLayers.size();
+ 
+     if (blurLayersSize == 0) {
+-- 
+2.31.1.606.gdf6c4f722c
+
