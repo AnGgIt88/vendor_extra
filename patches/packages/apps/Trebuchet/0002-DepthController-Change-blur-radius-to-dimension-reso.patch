@@ -1,0 +1,53 @@
+From c1d288bcb8157ddc2b21432cd14b4e9ae940af71 Mon Sep 17 00:00:00 2001
+From: Danny Lin <danny@kdrag0n.dev>
+Date: Wed, 5 May 2021 16:34:21 -0700
+Subject: [PATCH 2/2] DepthController: Change blur radius to dimension resource
+
+This allows us to define the blur radius in device-independent pixels
+instead of physical pixels, which is necessary to fix discrepancies in
+apparent blur strength across devices with different pixel densities.
+
+Change-Id: Ib45aeb023304aa6a70986be565f64ab38bbd1a9c
+---
+ quickstep/recents_ui_overrides/res/values/config.xml          | 4 ++--
+ .../com/android/launcher3/statehandlers/DepthController.java  | 4 ++--
+ 2 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/quickstep/recents_ui_overrides/res/values/config.xml b/quickstep/recents_ui_overrides/res/values/config.xml
+index 120e03456..18db303ad 100644
+--- a/quickstep/recents_ui_overrides/res/values/config.xml
++++ b/quickstep/recents_ui_overrides/res/values/config.xml
+@@ -14,5 +14,5 @@
+      limitations under the License.
+ -->
+ <resources>
+-    <integer name="max_depth_blur_radius">150</integer>
+-</resources>
+\ No newline at end of file
++    <dimen name="max_depth_blur_radius">150px</dimen>
++</resources>
+diff --git a/quickstep/src/com/android/launcher3/statehandlers/DepthController.java b/quickstep/src/com/android/launcher3/statehandlers/DepthController.java
+index fe8f0c653..076718e19 100644
+--- a/quickstep/src/com/android/launcher3/statehandlers/DepthController.java
++++ b/quickstep/src/com/android/launcher3/statehandlers/DepthController.java
+@@ -100,7 +100,7 @@ public class DepthController implements StateHandler<LauncherState>,
+     /**
+      * Blur radius when completely zoomed out, in pixels.
+      */
+-    private int mMaxBlurRadius;
++    private float mMaxBlurRadius;
+     private WallpaperManagerCompat mWallpaperManager;
+     private SurfaceControlCompat mSurface;
+     /**
+@@ -120,7 +120,7 @@ public class DepthController implements StateHandler<LauncherState>,
+ 
+     private void ensureDependencies() {
+         if (mWallpaperManager == null) {
+-            mMaxBlurRadius = mLauncher.getResources().getInteger(R.integer.max_depth_blur_radius);
++            mMaxBlurRadius = mLauncher.getResources().getDimension(R.dimen.max_depth_blur_radius);
+             mWallpaperManager = new WallpaperManagerCompat(mLauncher);
+         }
+         if (mLauncher.getRootView() != null && mOnAttachListener == null) {
+-- 
+2.31.1.606.gdf6c4f722c
+
