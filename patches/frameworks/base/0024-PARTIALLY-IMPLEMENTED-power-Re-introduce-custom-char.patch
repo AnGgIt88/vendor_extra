@@ -1,0 +1,83 @@
+From 97fe688edc8efbdda5581a1bb075e8d037ad0f95 Mon Sep 17 00:00:00 2001
+From: Bruno Martins <bgcngm@gmail.com>
+Date: Thu, 30 Aug 2018 10:02:00 +0800
+Subject: [PATCH 24/26] [PARTIALLY IMPLEMENTED] power: Re-introduce custom
+ charging sounds
+
+ * Mostly inspired by old implementation (see commit 72fe399),
+   but refactored to use most of the AOSP code.
+
+ * Also adapted to the wireless charging feature introduced in P.
+
+ Also include:
+
+   power: Respect global vibration setting for charging sounds
+
+    * Don't vibrate when in silent mode
+
+   Change-Id: Ife14105e74a28856d74a4c153637344124686e1b
+
+Change-Id: I5f6589002db51fe03ec2cf7bb33ed0e63948c55a
+---
+ .../java/com/android/server/power/Notifier.java | 17 +++++++++++++++++
+ .../server/power/PowerManagerService.java       |  2 ++
+ 2 files changed, 19 insertions(+)
+
+diff --git a/services/core/java/com/android/server/power/Notifier.java b/services/core/java/com/android/server/power/Notifier.java
+index 8f0fd607f92..ebc5eb116c4 100644
+--- a/services/core/java/com/android/server/power/Notifier.java
++++ b/services/core/java/com/android/server/power/Notifier.java
+@@ -96,6 +96,7 @@ public class Notifier {
+     private static final int MSG_WIRELESS_CHARGING_STARTED = 3;
+     private static final int MSG_PROFILE_TIMED_OUT = 5;
+     private static final int MSG_WIRED_CHARGING_STARTED = 6;
++    private static final int MSG_WIRED_CHARGING_DISCONNECTED = 7;
+ 
+     private static final long[] CHARGING_VIBRATION_TIME = {
+             40, 40, 40, 40, 40, 40, 40, 40, 40, // ramp-up sampling rate = 40ms
+@@ -660,6 +661,21 @@ public class Notifier {
+         mHandler.sendMessage(msg);
+     }
+ 
++    /**
++     * Called when wired charging has been disconnected so as to provide user feedback
++     */
++    public void onWiredChargingDisconnected(@UserIdInt int userId) {
++        if (DEBUG) {
++            Slog.d(TAG, "onWiredChargingDisconnected");
++        }
++
++        mSuspendBlocker.acquire();
++        Message msg = mHandler.obtainMessage(MSG_WIRED_CHARGING_DISCONNECTED);
++        msg.setAsynchronous(true);
++        msg.arg1 = userId;
++        mHandler.sendMessage(msg);
++    }
++
+     /**
+      * Dumps data for bugreports.
+      *
+@@ -876,6 +892,7 @@ public class Notifier {
+                     lockProfile(msg.arg1);
+                     break;
+                 case MSG_WIRED_CHARGING_STARTED:
++                case MSG_WIRED_CHARGING_DISCONNECTED:
+                     showWiredChargingStarted(msg.arg1);
+                     break;
+             }
+diff --git a/services/core/java/com/android/server/power/PowerManagerService.java b/services/core/java/com/android/server/power/PowerManagerService.java
+index 3a2f3a211c8..8a6d0247903 100644
+--- a/services/core/java/com/android/server/power/PowerManagerService.java
++++ b/services/core/java/com/android/server/power/PowerManagerService.java
+@@ -2164,6 +2164,8 @@ public final class PowerManagerService extends SystemService
+                     if (mIsPowered && !BatteryManager.isPlugWired(oldPlugType)
+                             && BatteryManager.isPlugWired(mPlugType)) {
+                         mNotifier.onWiredChargingStarted(mUserId);
++                    } else if (wasPowered && !mIsPowered) {
++                        mNotifier.onWiredChargingDisconnected(mUserId);
+                     } else if (dockedOnWirelessCharger) {
+                         mNotifier.onWirelessChargingStarted(mBatteryLevel, mUserId);
+                     }
+-- 
+2.31.1.606.gdf6c4f722c
+

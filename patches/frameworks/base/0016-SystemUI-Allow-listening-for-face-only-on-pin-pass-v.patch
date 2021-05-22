@@ -1,7 +1,7 @@
-From 4653ad928a8043b0b6c30fe903b9a95c0d681ead Mon Sep 17 00:00:00 2001
+From 6a835272cb046f18d8b22a07b4d4a78c5abd3100 Mon Sep 17 00:00:00 2001
 From: jhenrique09 <jhenrique09.mcz@hotmail.com>
 Date: Sat, 28 Mar 2020 12:51:07 -0300
-Subject: [PATCH 16/23] SystemUI: Allow listening for face only on pin/pass
+Subject: [PATCH 16/26] SystemUI: Allow listening for face only on pin/pass
  view
 
 Useful for devices with popup camera

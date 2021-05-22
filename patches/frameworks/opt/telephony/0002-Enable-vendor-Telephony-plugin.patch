@@ -1,4 +1,4 @@
-From 8cea9be9d268bdd5a3b9ef924a6102e74b52b0e4 Mon Sep 17 00:00:00 2001
+From d1876c5bae769342d04565269d1fccf075c0e3fc Mon Sep 17 00:00:00 2001
 From: Sneh Bansal <snehb@codeaurora.org>
 Date: Wed, 24 Jan 2018 15:57:05 +0530
 Subject: [PATCH 02/10] Enable vendor Telephony plugin

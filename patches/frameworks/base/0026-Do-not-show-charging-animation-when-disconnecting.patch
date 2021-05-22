@@ -1,0 +1,42 @@
+From 97186608764a6474881403138b6f0449ea406440 Mon Sep 17 00:00:00 2001
+From: Pranav Vashi <neobuddy89@gmail.com>
+Date: Tue, 27 Apr 2021 12:29:02 +0530
+Subject: [PATCH 26/26] Do not show charging animation when disconnecting
+
+Signed-off-by: Pranav Vashi <neobuddy89@gmail.com>
+---
+ .../core/java/com/android/server/power/Notifier.java     | 9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/power/Notifier.java b/services/core/java/com/android/server/power/Notifier.java
+index c7a682ddbd9..1f5f1310bd3 100644
+--- a/services/core/java/com/android/server/power/Notifier.java
++++ b/services/core/java/com/android/server/power/Notifier.java
+@@ -862,6 +862,11 @@ public class Notifier {
+         mSuspendBlocker.release();
+     }
+ 
++    private void showWiredChargingDisconnected(@UserIdInt int userId) {
++        playChargingStartedFeedback(userId, false /* wireless */);
++        mSuspendBlocker.release();
++    }
++
+     private void lockProfile(@UserIdInt int userId) {
+         mTrustManager.setDeviceLockedForUser(userId, true /*locked*/);
+     }
+@@ -896,9 +901,11 @@ public class Notifier {
+                     lockProfile(msg.arg1);
+                     break;
+                 case MSG_WIRED_CHARGING_STARTED:
+-                case MSG_WIRED_CHARGING_DISCONNECTED:
+                     showWiredChargingStarted(msg.arg1, msg.arg2);
+                     break;
++                case MSG_WIRED_CHARGING_DISCONNECTED:
++                    showWiredChargingDisconnected(msg.arg1);
++                    break;
+             }
+         }
+     }
+-- 
+2.31.1.606.gdf6c4f722c
+

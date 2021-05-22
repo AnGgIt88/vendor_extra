@@ -1,4 +1,4 @@
-From fa3cf1c8217d25cc75fa6526de3473d9f84a14d3 Mon Sep 17 00:00:00 2001
+From 8b2c1ba802d075648a99bd8ea6d719920fc4b760 Mon Sep 17 00:00:00 2001
 From: jhenrique09 <jhenrique09.mcz@hotmail.com>
 Date: Fri, 20 Nov 2020 20:33:21 -0300
 Subject: [PATCH 6/7] init: Only set safetynet props if not eng build

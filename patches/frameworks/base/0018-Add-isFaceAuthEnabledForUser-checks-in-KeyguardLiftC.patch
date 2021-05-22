@@ -1,7 +1,7 @@
-From 75a74e613e49fc0bdb59052bd8feb0323813c334 Mon Sep 17 00:00:00 2001
+From c6ce060551e6f4ea861b580f208565458ef92e84 Mon Sep 17 00:00:00 2001
 From: jie shen <jie.shen@unisoc.com>
 Date: Wed, 29 Jul 2020 10:27:51 +0800
-Subject: [PATCH 18/23] Add isFaceAuthEnabledForUser checks in
+Subject: [PATCH 18/26] Add isFaceAuthEnabledForUser checks in
  KeyguardLiftController
 
 When request pick gesture sensor, judge that if the current user does not turn on the face unlocking function, the sensor should not be Listening

@@ -1,10 +1,9 @@
-From 3a90ee1ba020d22e56d0a800c4329fdb53ad871e Mon Sep 17 00:00:00 2001
+From 7c001087dddc2a2c455a4aaa2be5ce3472640cd8 Mon Sep 17 00:00:00 2001
 From: Chris Renshaw <osm0sis@outlook.com>
 Date: Sat, 9 May 2020 06:53:32 -0300
-Subject: [PATCH 4/7] init: add vendor.*  keys to spoof safetynet
+Subject: [PATCH 4/7] init: add vendor.* keys to spoof safetynet
 
 aswinas@pixysos: add some more props from magisk hide to userspace hack by arter97
-
 
 Former-commit-id: fc79269db601c9cd0dad3781d4e6ee8f209c55fc
 ---

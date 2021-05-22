@@ -1,4 +1,4 @@
-From f5008fc85ad679996b2c9725478fa23bec8c7020 Mon Sep 17 00:00:00 2001
+From bcf9bb91194427e80e295d79418cf3e98ab703b6 Mon Sep 17 00:00:00 2001
 From: Yujing Gu <quic_yujingg@quicinc.com>
 Date: Tue, 10 May 2016 15:11:07 +0800
 Subject: [PATCH 09/10] SimPhoneBook: Add ANR/EMAIL support for USIM phonebook.

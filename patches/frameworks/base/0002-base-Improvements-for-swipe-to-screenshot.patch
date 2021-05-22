@@ -1,7 +1,7 @@
-From 1799cbc3a2a18fe52170f364afec4707256c1d1a Mon Sep 17 00:00:00 2001
+From 03c78b4616095dff4e73e0c5781643a12ba610af Mon Sep 17 00:00:00 2001
 From: Henrique Silva <jhenrique09.mcz@hotmail.com>
 Date: Tue, 7 May 2019 13:29:38 -0300
-Subject: [PATCH 02/23] base: Improvements for swipe to screenshot
+Subject: [PATCH 02/26] base: Improvements for swipe to screenshot
 
 * Cancel touch events when tap with three fingers
 

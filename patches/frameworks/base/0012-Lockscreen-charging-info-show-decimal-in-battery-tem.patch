@@ -1,7 +1,7 @@
-From 2fb9f062ffc876d27cbc2947065f429d6a8d3a97 Mon Sep 17 00:00:00 2001
+From 85e594fb4a002955f6a03e3311470aeb1c09fe8e Mon Sep 17 00:00:00 2001
 From: Lucchetto <lucchetto.tie@live.com>
 Date: Wed, 11 Dec 2019 19:48:13 +0100
-Subject: [PATCH 12/23] Lockscreen charging info: show decimal in battery
+Subject: [PATCH 12/26] Lockscreen charging info: show decimal in battery
  temperature
 
 Change-Id: I10bbe4df988387c401802475697452796e0afb6d

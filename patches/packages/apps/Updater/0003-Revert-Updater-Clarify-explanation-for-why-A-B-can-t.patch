@@ -1,4 +1,4 @@
-From a47e9dec707863d3a41b4cd63a750f891de5b375 Mon Sep 17 00:00:00 2001
+From b0d631eb1604fa06491afa9ca2d6ade342356513 Mon Sep 17 00:00:00 2001
 From: Pulkit077 <pulkitagarwal2k1@gmail.com>
 Date: Wed, 6 Jan 2021 08:29:54 +0530
 Subject: [PATCH 3/4] Revert "Updater: Clarify explanation for why A/B can't

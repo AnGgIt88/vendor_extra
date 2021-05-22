@@ -1,7 +1,7 @@
-From c3d791ba57348cc68056fa21bcce020c313a3f4e Mon Sep 17 00:00:00 2001
+From 1a8f58aceb4a0f1206ff070fd9f72dbd9f32d947 Mon Sep 17 00:00:00 2001
 From: Umashankar Godachi <umasha@codeaurora.org>
 Date: Tue, 27 Jun 2017 15:35:39 +0530
-Subject: [PATCH 22/23] Use proper coded alphabet when a contact is written
+Subject: [PATCH 22/26] Use proper coded alphabet when a contact is written
  into EF_ADN of USIM.
 
 Based on the description in "3GPP TS 31.102 clause 4.4.2.3" shown below,

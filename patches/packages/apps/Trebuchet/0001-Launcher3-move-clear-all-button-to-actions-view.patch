@@ -1,4 +1,4 @@
-From 2b59c2e70d9b7e552320af6a60ca391ac278e37d Mon Sep 17 00:00:00 2001
+From e497cf5379c5048e0153a774331447544bc0559d Mon Sep 17 00:00:00 2001
 From: Vachounet <vachounet@live.fr>
 Date: Mon, 26 Oct 2020 17:05:18 +0100
 Subject: [PATCH] Launcher3: move clear all button to actions view
