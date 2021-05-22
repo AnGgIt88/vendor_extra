@@ -24,6 +24,7 @@ fi
 repos="
 frameworks/av
 frameworks/base
+frameworks/native
 frameworks/opt/telephony
 lineage-sdk
 packages/apps/Settings
