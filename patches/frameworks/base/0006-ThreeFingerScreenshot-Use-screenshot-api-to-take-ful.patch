@@ -1,7 +1,7 @@
 From 23aa1d9f91a5d4db97d7ea29a0f1b21acc8c674e Mon Sep 17 00:00:00 2001
 From: DennySPb <dennyspb@gmail.com>
 Date: Wed, 25 Nov 2020 09:24:20 +0300
-Subject: [PATCH 06/26] ThreeFingerScreenshot: Use screenshot api to take full
+Subject: [PATCH 06/27] ThreeFingerScreenshot: Use screenshot api to take full
  screenshot
 
 Fixes issue when partial screenshot was fired before

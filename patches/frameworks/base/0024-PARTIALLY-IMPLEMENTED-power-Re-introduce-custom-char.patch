@@ -1,7 +1,7 @@
 From 97fe688edc8efbdda5581a1bb075e8d037ad0f95 Mon Sep 17 00:00:00 2001
 From: Bruno Martins <bgcngm@gmail.com>
 Date: Thu, 30 Aug 2018 10:02:00 +0800
-Subject: [PATCH 24/26] [PARTIALLY IMPLEMENTED] power: Re-introduce custom
+Subject: [PATCH 24/27] [PARTIALLY IMPLEMENTED] power: Re-introduce custom
  charging sounds
 
  * Mostly inspired by old implementation (see commit 72fe399),

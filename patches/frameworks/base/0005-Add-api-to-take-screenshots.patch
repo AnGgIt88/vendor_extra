@@ -1,7 +1,7 @@
 From ef3460e43776416972560607abd7cfcdafe58582 Mon Sep 17 00:00:00 2001
 From: bigrushdog <randall.rushing@gmail.com>
 Date: Tue, 12 Sep 2017 14:14:35 +0800
-Subject: [PATCH 05/26] Add api to take screenshots
+Subject: [PATCH 05/27] Add api to take screenshots
 
 abc: extracted from DUI
 add a public call to kekUtils

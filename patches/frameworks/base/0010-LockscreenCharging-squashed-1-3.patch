@@ -1,7 +1,7 @@
 From 20e15e3965ab15fcfcbb0a4b9fb84efd560265be Mon Sep 17 00:00:00 2001
 From: xyyx <xyyx@mail.ru>
 Date: Thu, 16 Aug 2018 06:27:04 +0000
-Subject: [PATCH 10/26] LockscreenCharging: squashed (1/3)
+Subject: [PATCH 10/27] LockscreenCharging: squashed (1/3)
 
 needed system/core patch
 based on:

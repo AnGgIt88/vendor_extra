@@ -1,7 +1,7 @@
 From b02d25c03dab3b0b216d42b02086981c1cb939a5 Mon Sep 17 00:00:00 2001
 From: rohan <purohit.rohan@gmail.com>
 Date: Thu, 16 Jul 2020 07:53:29 -0400
-Subject: [PATCH 11/26] KeyguardIndication: fix fc for certain devices on
+Subject: [PATCH 11/27] KeyguardIndication: fix fc for certain devices on
  lockscreen charging info
 
 https://del.dog/unimenocuc.log

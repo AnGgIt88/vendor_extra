@@ -1,7 +1,7 @@
 From 57636680a5a54fd7dc32b7470745d46ec899c360 Mon Sep 17 00:00:00 2001
 From: Simao Gomes Viana <xdevs23@outlook.com>
 Date: Sat, 26 May 2018 10:58:21 +0200
-Subject: [PATCH 09/26] core: jni: Switch to -O3
+Subject: [PATCH 09/27] core: jni: Switch to -O3
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

@@ -1,7 +1,7 @@
 From 884865e4cd0dd61ff9d5f514c3f488494efb1cc1 Mon Sep 17 00:00:00 2001
 From: jhenrique09 <jhenrique09.mcz@hotmail.com>
 Date: Thu, 19 Nov 2020 20:46:32 -0300
-Subject: [PATCH 23/26] Introduce PixelPropsUtils
+Subject: [PATCH 23/27] Introduce PixelPropsUtils
 
 That will spoof build fingerprints on some g00gle apps
 

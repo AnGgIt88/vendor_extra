@@ -1,7 +1,7 @@
 From a609d409c34578ea11b83d0f44f5d2a7555743f0 Mon Sep 17 00:00:00 2001
 From: Anushek Prasal <anushekprasal@gmail.com>
 Date: Wed, 29 May 2019 01:26:35 +0530
-Subject: [PATCH 25/26] base: Use wireless charging animation for wired
+Subject: [PATCH 25/27] base: Use wireless charging animation for wired
  charging too
 
 Signed-off-by: Pranav Vashi <neobuddy89@gmail.com>

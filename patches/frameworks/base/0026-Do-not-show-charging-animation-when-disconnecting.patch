@@ -1,7 +1,7 @@
 From 97186608764a6474881403138b6f0449ea406440 Mon Sep 17 00:00:00 2001
 From: Pranav Vashi <neobuddy89@gmail.com>
 Date: Tue, 27 Apr 2021 12:29:02 +0530
-Subject: [PATCH 26/26] Do not show charging animation when disconnecting
+Subject: [PATCH 26/27] Do not show charging animation when disconnecting
 
 Signed-off-by: Pranav Vashi <neobuddy89@gmail.com>
 ---

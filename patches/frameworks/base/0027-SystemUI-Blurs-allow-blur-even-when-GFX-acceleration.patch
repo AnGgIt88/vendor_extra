@@ -1,0 +1,34 @@
+From 9a3fc8c4fd41671cc9c9b27de39e2e808ddd1cf2 Mon Sep 17 00:00:00 2001
+From: Pulkit077 <pulkitagarwal2k1@gmail.com>
+Date: Sat, 22 May 2021 19:02:41 +0530
+Subject: [PATCH 27/27] SystemUI: Blurs: allow blur even when GFX acceleration
+ is disabled
+
+ isHighEndGfx returns false when ro.config.avoid_gfx_accel or config_avoidGfxAccel is set causing to disable blur.
+ Blur is still heavy but with new renderengine patches by Kdrag0n and reducing amount of blur, it seems to be less aggressive on CPU.
+ With this we can still reduce memory usage and keep using blur giving users option to enable it.
+
+ New behaviour: blurs are only disabled if device has low ram prop set.
+
+Test: boot, enable blur toggle under developer option, reboot and blurs are visible.
+Change-Id: Id1729aca89b6dff22c865ae913da044c0e7c7f31
+Signed-off-by: Pulkit077 <pulkitagarwal2k1@gmail.com>
+---
+ .../src/com/android/systemui/shared/system/BlurUtils.java       | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/packages/SystemUI/shared/src/com/android/systemui/shared/system/BlurUtils.java b/packages/SystemUI/shared/src/com/android/systemui/shared/system/BlurUtils.java
+index 9f26d851f77..87a6c9d8780 100644
+--- a/packages/SystemUI/shared/src/com/android/systemui/shared/system/BlurUtils.java
++++ b/packages/SystemUI/shared/src/com/android/systemui/shared/system/BlurUtils.java
+@@ -32,6 +32,6 @@ public abstract class BlurUtils {
+      * @return {@code true} when supported.
+      */
+     public static boolean supportsBlursOnWindows() {
+-        return mBlurSupportedSysProp && !mBlurDisabledSysProp && ActivityManager.isHighEndGfx();
++        return mBlurSupportedSysProp && !mBlurDisabledSysProp && !ActivityManager.isLowRamDeviceStatic();
+     }
+ }
+-- 
+2.31.1.606.gdf6c4f722c
+
