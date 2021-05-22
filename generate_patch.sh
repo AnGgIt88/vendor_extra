@@ -30,6 +30,7 @@ lineage-sdk
 packages/apps/Settings
 packages/apps/Trebuchet
 packages/apps/Updater
+prebuilts/abi-dumps/vndk
 system/core
 vendor/lineage"
 
