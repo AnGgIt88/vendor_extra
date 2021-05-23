@@ -1,4 +1,4 @@
-From 0b4bd5f51d02e74158166133d0ec84fd8b192411 Mon Sep 17 00:00:00 2001
+From 56fe2918545de4a1e137517e47f4bf75d8a086be Mon Sep 17 00:00:00 2001
 From: jhenrique09 <jhenrique09.mcz@hotmail.com>
 Date: Sat, 6 Mar 2021 15:27:11 -0300
 Subject: [PATCH 19/27] Allow using face as auth method for apps
@@ -54,13 +54,13 @@ index a87c7b3fa92..b80aa480ccb 100644
          <Button android:id="@+id/button_try_again"
              android:layout_width="wrap_content"
 diff --git a/packages/SystemUI/res/values/cm_strings.xml b/packages/SystemUI/res/values/cm_strings.xml
-index 37eaec86562..65c48915bc6 100644
+index 6a1683e9583..7ce52199f5f 100644
 --- a/packages/SystemUI/res/values/cm_strings.xml
 +++ b/packages/SystemUI/res/values/cm_strings.xml
-@@ -118,4 +118,7 @@
-     <string name="global_action_restart_download_progress">Restarting to download mode\u2026</string>
-     <!-- Restart to fastboot mode progress dialog. This is shown if the user chooses to restart the device. -->
-     <string name="global_action_restart_fastboot_progress">Restarting to fastbootd mode\u2026</string>
+@@ -122,4 +122,7 @@
+     <!-- Label for current user in power menu options dialog -->
+     <string name="global_action_current_user">Current</string>
+     <string name="global_action_users">Users</string>
 +
 +     <!-- Biometric Dialog - Use Face -->
 +    <string name="biometric_dialog_button_use_face">Use Face</string>

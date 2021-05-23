@@ -1,4 +1,4 @@
-From 6bea3a4f433fa1eeb4874be019f1b3581848b62b Mon Sep 17 00:00:00 2001
+From 211de2834e6fe7bfebf8eccd8acfa890f5c4a94b Mon Sep 17 00:00:00 2001
 From: jhenrique09 <jhenrique09.mcz@hotmail.com>
 Date: Fri, 20 Nov 2020 12:58:40 -0300
 Subject: [PATCH 8/8] init: Allow forcing custom build fingerprint [2/2]

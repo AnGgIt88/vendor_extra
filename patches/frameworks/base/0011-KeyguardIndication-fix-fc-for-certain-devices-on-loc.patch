@@ -1,4 +1,4 @@
-From 1191d4940575ab3fa4fcebadf8dbde99985b0a51 Mon Sep 17 00:00:00 2001
+From 360d7a348123ab3b1d84d93e3708c16ff761d3fb Mon Sep 17 00:00:00 2001
 From: rohan <purohit.rohan@gmail.com>
 Date: Thu, 16 Jul 2020 07:53:29 -0400
 Subject: [PATCH 11/27] KeyguardIndication: fix fc for certain devices on

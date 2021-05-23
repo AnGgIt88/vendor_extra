@@ -1,4 +1,4 @@
-From d2cad7d1e2a0c1dc97ea7b131ca14f5474deba2f Mon Sep 17 00:00:00 2001
+From aa5fc447d5124690766f3969a9add5f64d15726d Mon Sep 17 00:00:00 2001
 From: Danny Lin <danny@kdrag0n.dev>
 Date: Mon, 12 Apr 2021 21:46:31 -0700
 Subject: [PATCH 09/14] blur: Only set constant shader uniforms once

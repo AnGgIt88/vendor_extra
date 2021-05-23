@@ -1,4 +1,4 @@
-From 2bc820ee3ac901fa88eff85d77ad5460a0dddaef Mon Sep 17 00:00:00 2001
+From 01b5cd0bf1fb19dc051651feab73d4e89a0e767d Mon Sep 17 00:00:00 2001
 From: xNombre <kartapolska@gmail.com>
 Date: Sun, 21 Mar 2021 15:49:39 +0100
 Subject: [PATCH 02/14] binder: Enable ThinLTO

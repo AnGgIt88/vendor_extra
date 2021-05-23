@@ -1,4 +1,4 @@
-From aac0fcfc7a7a9023247dfd3c1ca3ee9064b5e24c Mon Sep 17 00:00:00 2001
+From 28295d19c951f0b9faf070094389a084178bbae8 Mon Sep 17 00:00:00 2001
 From: Anushek Prasal <anushekprasal@gmail.com>
 Date: Wed, 29 May 2019 01:26:35 +0530
 Subject: [PATCH 25/27] base: Use wireless charging animation for wired

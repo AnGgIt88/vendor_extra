@@ -1,4 +1,4 @@
-From 18f073eb50816df6f60f83febb30205bb200f5e4 Mon Sep 17 00:00:00 2001
+From 989085a9a13f3ef0137a00054fa27d0535feb4b1 Mon Sep 17 00:00:00 2001
 From: Dil3mm4 <dil3mm4.dev@gmail.com>
 Date: Tue, 22 Oct 2019 12:41:09 +0200
 Subject: [PATCH 7/7] Battery history: abort container visibility due to moved

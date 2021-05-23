@@ -1,4 +1,4 @@
-From b9d69d21da95fe0f455ba29bb8dff37bed93f84c Mon Sep 17 00:00:00 2001
+From 3d4e612269d2aaf10c9dab3fc38e3556cae6a17c Mon Sep 17 00:00:00 2001
 From: Dil3mm4 <dil3mm4.dev@gmail.com>
 Date: Wed, 18 Sep 2019 17:17:30 +0200
 Subject: [PATCH 6/7] Battery fragment: move battery graph to first fragment

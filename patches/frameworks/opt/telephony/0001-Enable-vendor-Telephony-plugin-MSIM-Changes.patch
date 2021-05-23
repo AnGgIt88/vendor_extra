@@ -1,4 +1,4 @@
-From f0e8828a54cee4c13579af096aa97bffb0eecc8c Mon Sep 17 00:00:00 2001
+From 04cac22e687d0c4d089d4e962417572a2785e0ad Mon Sep 17 00:00:00 2001
 From: Sneh Bansal <snehb@codeaurora.org>
 Date: Fri, 19 Jan 2018 17:18:32 +0530
 Subject: [PATCH 01/10] Enable vendor Telephony plugin: MSIM Changes

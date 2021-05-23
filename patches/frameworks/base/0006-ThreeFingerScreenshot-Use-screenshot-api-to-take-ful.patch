@@ -1,4 +1,4 @@
-From 6a7ce3af7a6d05b580c08d8ae7b454ca876640f4 Mon Sep 17 00:00:00 2001
+From 161efd4408ddda4fd59b3782e7bfd3634319d678 Mon Sep 17 00:00:00 2001
 From: DennySPb <dennyspb@gmail.com>
 Date: Wed, 25 Nov 2020 09:24:20 +0300
 Subject: [PATCH 06/27] ThreeFingerScreenshot: Use screenshot api to take full

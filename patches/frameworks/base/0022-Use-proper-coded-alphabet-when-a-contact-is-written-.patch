@@ -1,4 +1,4 @@
-From d1537785543a3dd11adc087059790a1f80a02981 Mon Sep 17 00:00:00 2001
+From ae37609e2c540172980e9957481a485e43c6fe4f Mon Sep 17 00:00:00 2001
 From: Umashankar Godachi <umasha@codeaurora.org>
 Date: Tue, 27 Jun 2017 15:35:39 +0530
 Subject: [PATCH 22/27] Use proper coded alphabet when a contact is written

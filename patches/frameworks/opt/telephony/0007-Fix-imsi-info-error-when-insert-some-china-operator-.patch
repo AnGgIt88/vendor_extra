@@ -1,4 +1,4 @@
-From 1957f54744f39167f9cef36450355bad58d17689 Mon Sep 17 00:00:00 2001
+From 75745b660eeb666473982e8f7668e7b2cdb7e095 Mon Sep 17 00:00:00 2001
 From: qiongz <qiongz@codeaurora.org>
 Date: Wed, 14 Jun 2017 15:42:56 +0800
 Subject: [PATCH 07/10] Fix imsi info error when insert some china operator

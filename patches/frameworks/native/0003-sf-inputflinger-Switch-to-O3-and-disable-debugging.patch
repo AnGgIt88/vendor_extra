@@ -1,4 +1,4 @@
-From 59bed7dea07ffc5bcb5b2dbbfd4e9c0803eb6b41 Mon Sep 17 00:00:00 2001
+From d2c1e29cbcae854326cad1eb7bb1cb76a471acac Mon Sep 17 00:00:00 2001
 From: Adithya R <gh0strider.2k18.reborn@gmail.com>
 Date: Wed, 31 Mar 2021 12:10:24 +0530
 Subject: [PATCH 03/14] sf/inputflinger: Switch to -O3 and disable debugging

@@ -1,4 +1,4 @@
-From 24c96a701c3825cdd2907de65b8d8812ae27af4f Mon Sep 17 00:00:00 2001
+From 9912329855c479a0150006b70005b4fac9c6440c Mon Sep 17 00:00:00 2001
 From: xyyx <xyyx@mail.ru>
 Date: Sat, 9 Sep 2017 15:19:55 +0800
 Subject: [PATCH 1/8] LockscreenCharging: squashed (2/3)

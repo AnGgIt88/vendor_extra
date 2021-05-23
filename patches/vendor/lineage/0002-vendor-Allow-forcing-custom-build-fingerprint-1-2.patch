@@ -1,4 +1,4 @@
-From 4f3b3e1c8807d1b94bb2cbf3a848749906997be5 Mon Sep 17 00:00:00 2001
+From daf4224d169edf9a13ef1d6670d8dd1f88e95d95 Mon Sep 17 00:00:00 2001
 From: jhenrique09 <jhenrique09.mcz@hotmail.com>
 Date: Fri, 20 Nov 2020 12:50:43 -0300
 Subject: [PATCH 2/2] vendor: Allow forcing custom build fingerprint [1/2]

@@ -1,4 +1,4 @@
-From 9f799a64a4f7f321e65ace0e4f48275e3d748a90 Mon Sep 17 00:00:00 2001
+From 8c770088b3c7f1f1d8c5cfcb3dbb2a1e157c911f Mon Sep 17 00:00:00 2001
 From: Pulkit077 <pulkitagarwal2k1@gmail.com>
 Date: Sat, 22 May 2021 19:02:41 +0530
 Subject: [PATCH 27/27] SystemUI: Blurs: allow blur even when GFX acceleration

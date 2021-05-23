@@ -1,4 +1,4 @@
-From 2d3bbe353ab93cc700e89e9df19162c2d714cdde Mon Sep 17 00:00:00 2001
+From c0ca03150662200b015b45a530f3695240d19a4e Mon Sep 17 00:00:00 2001
 From: Danny Lin <danny@kdrag0n.dev>
 Date: Wed, 14 Apr 2021 01:33:26 -0700
 Subject: [PATCH 07/14] blur: Skip processing of alpha channel by swizzling RGB

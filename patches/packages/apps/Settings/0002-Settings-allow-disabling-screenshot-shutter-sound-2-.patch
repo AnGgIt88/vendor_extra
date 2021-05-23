@@ -1,4 +1,4 @@
-From bbf9e0f5403e3b64a1f2930075c1d429da6abe93 Mon Sep 17 00:00:00 2001
+From 056609ee5ee53c815f131bb0790431b43561ff2d Mon Sep 17 00:00:00 2001
 From: maxwen <max.weninger@gmail.com>
 Date: Sun, 29 Mar 2015 18:38:36 +0200
 Subject: [PATCH 2/7] Settings: allow disabling screenshot shutter sound [2/2]

@@ -1,4 +1,4 @@
-From 3873f82f71f82432e9f14b835804810e1da3b967 Mon Sep 17 00:00:00 2001
+From 581e7fa7185a2cf1aa0234095ae4d72eb3703840 Mon Sep 17 00:00:00 2001
 From: jhenrique09 <jhenrique09.mcz@hotmail.com>
 Date: Mon, 8 Feb 2021 00:06:36 -0300
 Subject: [PATCH] libcameraservice: Remove restrictions for faceunlock service

@@ -1,4 +1,4 @@
-From afc21c4a534a8f6522c2882463a06d8bf67f80a0 Mon Sep 17 00:00:00 2001
+From 21e56cae4352c0a4aac4117f262c60646421b662 Mon Sep 17 00:00:00 2001
 From: Park Ju Hyung <qkrwngud825@gmail.com>
 Date: Mon, 6 Nov 2017 20:30:39 +0900
 Subject: [PATCH 3/8] init: workaround SafetyNet check

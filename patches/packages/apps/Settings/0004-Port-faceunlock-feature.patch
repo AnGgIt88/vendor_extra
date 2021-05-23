@@ -1,4 +1,4 @@
-From 0dc86a666d8e6694a4e07b6d5f2532e4ef741e47 Mon Sep 17 00:00:00 2001
+From 3dfc0766235b15b9bd16293848efd87dd6a792a7 Mon Sep 17 00:00:00 2001
 From: jhenrique09 <jhenrique09.mcz@hotmail.com>
 Date: Sun, 7 Feb 2021 21:14:30 -0300
 Subject: [PATCH 4/7] Port faceunlock feature
