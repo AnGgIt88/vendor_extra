@@ -16,6 +16,9 @@ PRODUCT_PRODUCT_PROPERTIES += \
 PRODUCT_PRODUCT_PROPERTIES += \
     ro.sf.blurs_are_expensive=1
 
+# Build Fingerprint
+TARGET_FORCE_BUILD_FINGERPRINT := google/crosshatch/crosshatch:11/RQ2A.210505.002/7246365:user/release-keys
+
 # Face Unlock
 PRODUCT_PACKAGES += \
     FaceUnlockService
