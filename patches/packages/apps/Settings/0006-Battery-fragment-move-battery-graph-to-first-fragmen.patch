@@ -1,0 +1,213 @@
+From b9d69d21da95fe0f455ba29bb8dff37bed93f84c Mon Sep 17 00:00:00 2001
+From: Dil3mm4 <dil3mm4.dev@gmail.com>
+Date: Wed, 18 Sep 2019 17:17:30 +0200
+Subject: [PATCH 6/7] Battery fragment: move battery graph to first fragment
+
+-Fix needed: layout seems to ignore marginStart
+
+Change-Id: Ie6e91efc314e195ca367b1dcf65330898a805168
+---
+ res/layout/battery_header.xml                 | 85 +++++++++++++------
+ res/layout/battery_usage_graph.xml            | 10 ---
+ .../fuelgauge/BatteryHistoryPreference.java   |  3 -
+ .../settings/fuelgauge/PowerUsageSummary.java | 10 +++
+ .../android/settings/widget/UsageView.java    | 10 +++
+ 5 files changed, 80 insertions(+), 38 deletions(-)
+
+diff --git a/res/layout/battery_header.xml b/res/layout/battery_header.xml
+index 574d7d4631..667cc0dbbd 100644
+--- a/res/layout/battery_header.xml
++++ b/res/layout/battery_header.xml
+@@ -17,44 +17,79 @@
+ 
+ <LinearLayout
+     xmlns:android="http://schemas.android.com/apk/res/android"
++    xmlns:settings="http://schemas.android.com/apk/res-auto"
+     android:id="@+id/battery_entity_header"
+     android:layout_width="match_parent"
+     android:layout_height="match_parent"
+     android:layout_gravity="center"
+-    android:orientation="horizontal"
++    android:paddingLeft="8dp"
++    android:orientation="vertical"
++    android:paddingTop="12dp"
++    android:paddingBottom="24dp"
+     style="@style/EntityHeader">
+ 
+     <LinearLayout
+         android:id="@+id/battery_info_layout"
+-        android:layout_width="170dp"
++        android:layout_width="match_parent"
+         android:layout_height="wrap_content"
+-        android:layout_marginStart="72dp"
+-        android:layout_marginEnd="8dp"
+-        android:orientation="vertical">
++        android:orientation="horizontal">
+ 
+-        <TextView
+-            android:id="@+id/battery_percent"
++        <LinearLayout
+             android:layout_width="match_parent"
+             android:layout_height="wrap_content"
+-            android:layout_marginTop="12dp"
+-            android:textAppearance="@style/TextAppearance.EntityHeaderTitle"
+-            android:textSize="36sp" />
++            android:layout_marginStart="2dp"
++            android:orientation="horizontal">
+ 
+-        <TextView
+-            android:id="@+id/summary1"
+-            android:layout_width="match_parent"
+-            android:layout_height="wrap_content"
+-            android:layout_marginTop="8dp"
+-            android:minLines="3"
+-            android:textAppearance="@android:style/TextAppearance.DeviceDefault.Small"/>
+-            android:textColor="?android:attr/textColorPrimary"/>
++            <com.android.settings.fuelgauge.BatteryMeterView
++                android:id="@+id/battery_header_icon"
++                android:layout_marginTop="2dp"
++                android:layout_width="@dimen/battery_meter_width"
++                android:layout_height="@dimen/battery_meter_height"/>
+ 
+-    </LinearLayout>
++            <LinearLayout
++                android:layout_width="0dp"
++                android:layout_height="wrap_content"
++                android:layout_weight="1"
++                android:layout_gravity="center_vertical"
++                android:paddingTop="16dp"
++                android:paddingStart="16dp"
++                android:orientation="vertical">
+ 
+-    <com.android.settings.fuelgauge.BatteryMeterView
+-        android:id="@+id/battery_header_icon"
+-        android:layout_width="match_parent"
+-        android:layout_height="@dimen/battery_meter_height"
+-        android:layout_gravity="center"/>
++                <TextView
++                    android:id="@+id/battery_percent"
++                    android:layout_width="wrap_content"
++                    android:layout_height="wrap_content"
++                    android:gravity="center"
++                    android:layout_marginTop="12dp"
++                    android:textAppearance="@style/TextAppearance.EntityHeaderTitle"
++                    android:textSize="36sp" />
+ 
+-</LinearLayout>
+\ No newline at end of file
++                <TextView
++                    android:id="@+id/summary1"
++                    android:layout_width="match_parent"
++                    android:layout_height="wrap_content"
++                    android:layout_marginTop="8dp"
++                    android:minLines="2"
++                    android:textAppearance="@android:style/TextAppearance.DeviceDefault.Small"/>
++                    android:textColor="?android:attr/textColorPrimary"/>
++
++                <TextView
++                    android:id="@+id/summary2"
++                    android:layout_width="match_parent"
++                    android:layout_height="wrap_content"
++                    android:textAppearance="@android:style/TextAppearance.DeviceDefault.Small"/>
++                    android:textColor="?android:attr/textColorPrimary"/>
++        </LinearLayout>
++      </LinearLayout>
++</LinearLayout>
++
++    <com.android.settings.widget.UsageView
++        android:id="@+id/battery_usage"
++        android:layout_width="match_parent"
++        android:layout_height="151dp"
++        android:layout_marginBottom="1dp"
++        android:layout_marginStart="2dp"
++        android:colorAccent="?android:attr/colorAccent"
++        android:gravity="fill_horizontal"
++        settings:textColor="?android:attr/textColorSecondary"/>
++</LinearLayout>
+diff --git a/res/layout/battery_usage_graph.xml b/res/layout/battery_usage_graph.xml
+index 93001c3f02..0f254b0896 100644
+--- a/res/layout/battery_usage_graph.xml
++++ b/res/layout/battery_usage_graph.xml
+@@ -33,16 +33,6 @@
+         android:textSize="36sp"
+         android:textColor="?android:attr/colorAccent" />
+ 
+-    <com.android.settings.widget.UsageView
+-        android:id="@+id/battery_usage"
+-        android:layout_width="match_parent"
+-        android:layout_height="141dp"
+-        android:layout_marginBottom="16dp"
+-        settings:sideLabels="@array/battery_labels"
+-        android:colorAccent="?android:attr/colorAccent"
+-        android:gravity="end"
+-        settings:textColor="?android:attr/textColorSecondary" />
+-
+     <TextView
+         android:id="@+id/bottom_summary"
+         android:layout_width="match_parent"
+diff --git a/src/com/android/settings/fuelgauge/BatteryHistoryPreference.java b/src/com/android/settings/fuelgauge/BatteryHistoryPreference.java
+index faca9fbcb6..7e8ae699f3 100644
+--- a/src/com/android/settings/fuelgauge/BatteryHistoryPreference.java
++++ b/src/com/android/settings/fuelgauge/BatteryHistoryPreference.java
+@@ -89,9 +89,6 @@ public class BatteryHistoryPreference extends Preference {
+         if (hideSummary) {
+             mSummaryView.setVisibility(View.GONE);
+         }
+-        UsageView usageView = (UsageView) view.findViewById(R.id.battery_usage);
+-        usageView.findViewById(R.id.label_group).setAlpha(.7f);
+-        mBatteryInfo.bindHistory(usageView);
+         BatteryUtils.logRuntime(TAG, "onBindViewHolder", startTime);
+     }
+ }
+diff --git a/src/com/android/settings/fuelgauge/PowerUsageSummary.java b/src/com/android/settings/fuelgauge/PowerUsageSummary.java
+index 57949db473..d214aa5c6c 100644
+--- a/src/com/android/settings/fuelgauge/PowerUsageSummary.java
++++ b/src/com/android/settings/fuelgauge/PowerUsageSummary.java
+@@ -53,6 +53,9 @@ import com.android.settingslib.utils.PowerUtil;
+ import com.android.settingslib.utils.StringUtil;
+ import com.android.settingslib.widget.LayoutPreference;
+ 
++import com.android.settings.widget.UsageView;
++
++import java.util.Collections;
+ import java.util.List;
+ 
+ /**
+@@ -120,6 +123,13 @@ public class PowerUsageSummary extends PowerUsageBase implements OnLongClickList
+                     mBatteryHeaderPreferenceController.updateHeaderPreference(batteryInfo);
+                     mBatteryInfo = batteryInfo;
+                     updateLastFullChargePreference();
++                    Handler h = new Handler();
++                        h.postDelayed(() -> {
++                            UsageView usageView = (UsageView) mBatteryLayoutPref.findViewById(R.id.battery_usage);
++                            usageView.findViewById(R.id.label_group).setAlpha(.7f);
++                            mBatteryInfo.bindHistory(usageView);
++                        }, 300);
++
+                 }
+ 
+                 @Override
+diff --git a/src/com/android/settings/widget/UsageView.java b/src/com/android/settings/widget/UsageView.java
+index 25bbbe3ec2..a083667ed1 100644
+--- a/src/com/android/settings/widget/UsageView.java
++++ b/src/com/android/settings/widget/UsageView.java
+@@ -82,6 +82,16 @@ public class UsageView extends FrameLayout {
+                 View bottomSpace = bottomLabels.findViewById(R.id.bottom_label_space);
+                 bottomLabels.removeView(bottomSpace);
+                 bottomLabels.addView(bottomSpace);
++            } else if (gravity == Gravity.FILL_HORIZONTAL) {
++                        LinearLayout bottomLabels = findViewById(R.id.bottom_label_group);
++                        View bottomSpace = bottomLabels.findViewById(R.id.bottom_label_space);
++                        bottomLabels.removeView(bottomSpace);
++                        LinearLayout labels = findViewById(R.id.label_group);
++                        LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) labels.getLayoutParams();
++                        // Hide the labels without removing them
++                        params.width = 0;
++                        labels.setLayoutParams(params);
++
+             } else if (gravity != Gravity.START) {
+                 throw new IllegalArgumentException("Unsupported gravity " + gravity);
+             }
+-- 
+2.31.1.606.gdf6c4f722c
+

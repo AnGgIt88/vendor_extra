@@ -1,0 +1,28 @@
+From 18f073eb50816df6f60f83febb30205bb200f5e4 Mon Sep 17 00:00:00 2001
+From: Dil3mm4 <dil3mm4.dev@gmail.com>
+Date: Tue, 22 Oct 2019 12:41:09 +0200
+Subject: [PATCH 7/7] Battery history: abort container visibility due to moved
+ graph
+
+---
+ res/layout/battery_usage_graph.xml | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/res/layout/battery_usage_graph.xml b/res/layout/battery_usage_graph.xml
+index 0f254b0896..aee6832c3a 100644
+--- a/res/layout/battery_usage_graph.xml
++++ b/res/layout/battery_usage_graph.xml
+@@ -16,8 +16,8 @@
+ 
+ <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+     xmlns:settings="http://schemas.android.com/apk/res-auto"
+-    android:layout_width="match_parent"
+-    android:layout_height="wrap_content"
++    android:layout_width="0dp"
++    android:layout_height="0dp"
+     android:paddingTop="16dp"
+     android:paddingStart="@dimen/preference_no_icon_padding_start"
+     android:paddingEnd="?android:attr/listPreferredItemPaddingEnd"
+-- 
+2.31.1.606.gdf6c4f722c
+
