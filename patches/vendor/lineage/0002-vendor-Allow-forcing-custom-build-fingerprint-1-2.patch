@@ -1,0 +1,63 @@
+From 4f3b3e1c8807d1b94bb2cbf3a848749906997be5 Mon Sep 17 00:00:00 2001
+From: jhenrique09 <jhenrique09.mcz@hotmail.com>
+Date: Fri, 20 Nov 2020 12:50:43 -0300
+Subject: [PATCH 2/2] vendor: Allow forcing custom build fingerprint [1/2]
+
+Change-Id: I783a19829cb9d655f8abaeafa14f1f3d6a12ed20
+---
+ build/soong/Android.bp     | 19 +++++++++++++++++++
+ config/BoardConfigSoong.mk |  4 +++-
+ 2 files changed, 22 insertions(+), 1 deletion(-)
+
+diff --git a/build/soong/Android.bp b/build/soong/Android.bp
+index 0e8ed94f..9357aeaa 100644
+--- a/build/soong/Android.bp
++++ b/build/soong/Android.bp
+@@ -506,3 +506,22 @@ stagefright_qcom_legacy {
+         },
+     },
+ }
++
++soong_config_module_type {
++    name: "force_build_fingerprint",
++    module_type: "cc_defaults",
++    config_namespace: "lineageGlobalVars",
++    value_variables: ["force_build_fingerprint"],
++    properties: [
++        "cppflags"
++    ],
++}
++
++force_build_fingerprint {
++    name: "force_build_fingerprint_defaults",
++    soong_config_variables: {
++        force_build_fingerprint: {
++            cppflags: ["-DTARGET_FORCE_BUILD_FINGERPRINT=\"%s\""],
++        },
++    },
++}
+diff --git a/config/BoardConfigSoong.mk b/config/BoardConfigSoong.mk
+index 72939392..09468fd8 100644
+--- a/config/BoardConfigSoong.mk
++++ b/config/BoardConfigSoong.mk
+@@ -39,7 +39,8 @@ SOONG_CONFIG_lineageGlobalVars += \
+     target_ld_shim_libs \
+     target_process_sdk_version_override \
+     target_surfaceflinger_fod_lib \
+-    uses_camera_parameter_lib
++    uses_camera_parameter_lib \
++    force_build_fingerprint
+ 
+ SOONG_CONFIG_NAMESPACES += lineageNvidiaVars
+ SOONG_CONFIG_lineageNvidiaVars += \
+@@ -97,6 +98,7 @@ SOONG_CONFIG_lineageGlobalVars_target_ld_shim_libs := $(subst $(space),:,$(TARGE
+ SOONG_CONFIG_lineageGlobalVars_target_process_sdk_version_override := $(TARGET_PROCESS_SDK_VERSION_OVERRIDE)
+ SOONG_CONFIG_lineageGlobalVars_target_surfaceflinger_fod_lib := $(TARGET_SURFACEFLINGER_FOD_LIB)
+ SOONG_CONFIG_lineageGlobalVars_uses_camera_parameter_lib := $(TARGET_SPECIFIC_CAMERA_PARAMETER_LIBRARY)
++SOONG_CONFIG_lineageGlobalVars_force_build_fingerprint := $(TARGET_FORCE_BUILD_FINGERPRINT)
+ ifneq ($(filter $(QSSI_SUPPORTED_PLATFORMS),$(TARGET_BOARD_PLATFORM)),)
+ SOONG_CONFIG_lineageQcomVars_qcom_display_headers_namespace := vendor/qcom/opensource/commonsys-intf/display
+ else
+-- 
+2.31.1.606.gdf6c4f722c
+

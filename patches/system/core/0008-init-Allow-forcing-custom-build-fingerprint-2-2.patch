@@ -1,0 +1,94 @@
+From 6bea3a4f433fa1eeb4874be019f1b3581848b62b Mon Sep 17 00:00:00 2001
+From: jhenrique09 <jhenrique09.mcz@hotmail.com>
+Date: Fri, 20 Nov 2020 12:58:40 -0300
+Subject: [PATCH 8/8] init: Allow forcing custom build fingerprint [2/2]
+
+Change-Id: Iae1db7ad74d3cb14c2cd4405f7ede13a4444bc5a
+
+Former-commit-id: e139f1e09832c5117cddf551240442a8528c5c99
+Change-Id: I88b81c21dd0346c031e9b9375962109c16d86d14
+---
+ init/Android.bp           |  1 +
+ init/property_service.cpp | 25 +++++++++++++++++++++++++
+ 2 files changed, 26 insertions(+)
+
+diff --git a/init/Android.bp b/init/Android.bp
+index e28d9f026..3bf0cb124 100644
+--- a/init/Android.bp
++++ b/init/Android.bp
+@@ -170,6 +170,7 @@ cc_library_static {
+         "init_defaults",
+         "selinux_policy_version",
+         "vendor_init_defaults",
++        "force_build_fingerprint_defaults",
+     ],
+     srcs: init_common_sources + init_device_sources,
+     whole_static_libs: [
+diff --git a/init/property_service.cpp b/init/property_service.cpp
+index 48b781120..89944ca80 100644
+--- a/init/property_service.cpp
++++ b/init/property_service.cpp
+@@ -825,6 +825,19 @@ static const char *snet_prop_value[] = {
+     NULL
+ };
+ 
++#ifdef TARGET_FORCE_BUILD_FINGERPRINT
++static const char *build_fingerprint_key[] = {
++    "ro.build.fingerprint",
++    "ro.system_ext.build.fingerprint",
++    "ro.vendor.build.fingerprint",
++    "ro.bootimage.build.fingerprint",
++    "ro.odm.build.fingerprint",
++    "ro.product.build.fingerprint",
++    "ro.system.build.fingerprint",
++    NULL
++};
++#endif
++
+ static void workaround_snet_properties() {
+     std::string build_type = android::base::GetProperty("ro.build.type", "");
+ 
+@@ -847,6 +860,13 @@ static void workaround_snet_properties() {
+     build_flavor_value = android::base::StringReplace(build_flavor_value, "userdebug", "user", false);
+     PropertySet(build_flavor_key, build_flavor_value, &error);
+ 
++    // Force build fingerprint if specified
++    #ifdef TARGET_FORCE_BUILD_FINGERPRINT
++        for (int i = 0; build_fingerprint_key[i]; ++i) {
++            PropertySet(build_fingerprint_key[i], TARGET_FORCE_BUILD_FINGERPRINT, &error);
++        }
++    #endif
++
+     // Restore the normal property override security after safetynet props have been set
+     weaken_prop_override_security = false;
+ }
+@@ -920,6 +940,7 @@ static void property_initialize_ro_product_props() {
+     }
+ }
+ 
++#ifndef TARGET_FORCE_BUILD_FINGERPRINT
+ // If the ro.build.fingerprint property has not been set, derive it from constituent pieces
+ static void property_derive_build_fingerprint() {
+     std::string build_fingerprint = GetProperty("ro.build.fingerprint", "");
+@@ -953,6 +974,7 @@ static void property_derive_build_fingerprint() {
+                    << ")";
+     }
+ }
++#endif
+ 
+ void PropertyLoadBootDefaults() {
+     // TODO(b/117892318): merge prop.default and build.prop files into one
+@@ -997,7 +1019,10 @@ void PropertyLoadBootDefaults() {
+     vendor_load_properties();
+ 
+     property_initialize_ro_product_props();
++
++#ifndef TARGET_FORCE_BUILD_FINGERPRINT
+     property_derive_build_fingerprint();
++#endif
+ 
+     if (android::base::GetBoolProperty("ro.persistent_properties.ready", false)) {
+         update_sys_usb_config();
+-- 
+2.31.1.606.gdf6c4f722c
+
