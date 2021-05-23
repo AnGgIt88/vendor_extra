@@ -1,4 +1,4 @@
-From 57636680a5a54fd7dc32b7470745d46ec899c360 Mon Sep 17 00:00:00 2001
+From 6c8e227a5d2a5330113e378414895ce979ee5a54 Mon Sep 17 00:00:00 2001
 From: Simao Gomes Viana <xdevs23@outlook.com>
 Date: Sat, 26 May 2018 10:58:21 +0200
 Subject: [PATCH 09/27] core: jni: Switch to -O3

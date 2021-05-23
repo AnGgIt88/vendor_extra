@@ -1,4 +1,4 @@
-From e399e4ab957fa0fe7ccd1dd9b2927d210b65cf8c Mon Sep 17 00:00:00 2001
+From 7a05d384d46656baf401131369b4de930f4fb960 Mon Sep 17 00:00:00 2001
 From: Chaitanya Saggurthi <csaggurt@codeaurora.org>
 Date: Fri, 20 Jul 2018 15:07:01 +0530
 Subject: [PATCH 03/10] CDMA MO SMS follow on DC feature

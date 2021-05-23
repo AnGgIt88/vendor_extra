@@ -1,4 +1,4 @@
-From ed661874a103a409ed6ae6db033360e92014a5db Mon Sep 17 00:00:00 2001
+From c9fcad15974cd7495795922983758058afd830be Mon Sep 17 00:00:00 2001
 From: Danny Lin <danny@kdrag0n.dev>
 Date: Wed, 14 Apr 2021 15:44:46 -0700
 Subject: [PATCH 13/14] blur: Calculate vertices in vertex shader instead of

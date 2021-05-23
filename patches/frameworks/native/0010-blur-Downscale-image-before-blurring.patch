@@ -1,4 +1,4 @@
-From 3481f442b370fcf2c828bf02ec222df838ff30ed Mon Sep 17 00:00:00 2001
+From b334bf5784fc9cc6e68a6bc2621610e69ae26d33 Mon Sep 17 00:00:00 2001
 From: Danny Lin <danny@kdrag0n.dev>
 Date: Mon, 12 Apr 2021 22:10:18 -0700
 Subject: [PATCH 10/14] blur: Downscale image before blurring

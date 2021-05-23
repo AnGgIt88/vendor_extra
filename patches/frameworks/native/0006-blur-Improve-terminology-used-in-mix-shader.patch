@@ -1,4 +1,4 @@
-From 352630c8032d29f8c5898a76bce49ccd3bc49ca4 Mon Sep 17 00:00:00 2001
+From 2d38831c57e14111b22ec9d777c49727b5dea40d Mon Sep 17 00:00:00 2001
 From: Danny Lin <danny@kdrag0n.dev>
 Date: Mon, 12 Apr 2021 20:26:50 -0700
 Subject: [PATCH 06/14] blur: Improve terminology used in mix shader

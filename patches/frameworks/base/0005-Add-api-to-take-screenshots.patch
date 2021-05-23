@@ -1,4 +1,4 @@
-From ef3460e43776416972560607abd7cfcdafe58582 Mon Sep 17 00:00:00 2001
+From 91a667b7b2eaf3bda1d86b99ce0d263783b34e23 Mon Sep 17 00:00:00 2001
 From: bigrushdog <randall.rushing@gmail.com>
 Date: Tue, 12 Sep 2017 14:14:35 +0800
 Subject: [PATCH 05/27] Add api to take screenshots

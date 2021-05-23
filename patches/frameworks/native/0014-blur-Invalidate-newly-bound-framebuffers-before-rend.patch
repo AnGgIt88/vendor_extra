@@ -1,4 +1,4 @@
-From 3096676fecd22bfa6121693577bfed35ac1b4102 Mon Sep 17 00:00:00 2001
+From 2a3bd426fcee6154afd94f371548bea2a508c316 Mon Sep 17 00:00:00 2001
 From: Danny Lin <danny@kdrag0n.dev>
 Date: Wed, 14 Apr 2021 15:57:04 -0700
 Subject: [PATCH 14/14] blur: Invalidate newly-bound framebuffers before

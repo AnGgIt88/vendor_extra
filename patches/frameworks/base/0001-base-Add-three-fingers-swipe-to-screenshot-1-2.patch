@@ -1,4 +1,4 @@
-From 54a4e00a7a3d87b9d616404f4afd73281287b80e Mon Sep 17 00:00:00 2001
+From f8026748e80b70c817596082e51e0a2b1754f71e Mon Sep 17 00:00:00 2001
 From: Nidhun Balaji T R <nidhunbalaji@gmail.com>
 Date: Mon, 22 Jun 2020 08:51:56 +0530
 Subject: [PATCH 01/27] base: Add three-fingers-swipe to screenshot [1/2]

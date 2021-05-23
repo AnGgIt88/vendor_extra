@@ -1,4 +1,4 @@
-From ef929138beec4d14ddeb579a6a9c441d4b20709d Mon Sep 17 00:00:00 2001
+From 51fa4639159d3ae4a9d772ffee6951de55038f5b Mon Sep 17 00:00:00 2001
 From: Danny Lin <danny@kdrag0n.dev>
 Date: Sun, 11 Apr 2021 16:35:08 -0700
 Subject: [PATCH 05/14] blur: Limit blur to the two frontmost layers

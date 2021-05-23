@@ -1,4 +1,4 @@
-From c6ce060551e6f4ea861b580f208565458ef92e84 Mon Sep 17 00:00:00 2001
+From 5564e05ab5aa0fbf5302732fd08f8f78008da58c Mon Sep 17 00:00:00 2001
 From: jie shen <jie.shen@unisoc.com>
 Date: Wed, 29 Jul 2020 10:27:51 +0800
 Subject: [PATCH 18/27] Add isFaceAuthEnabledForUser checks in

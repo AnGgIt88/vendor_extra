@@ -1,4 +1,4 @@
-From ff02731ced97672757c519b73184a3fecdb9c30f Mon Sep 17 00:00:00 2001
+From b24cd55a2f0ee37aad649049bf2bb7950b96ea2e Mon Sep 17 00:00:00 2001
 From: zhu youhua <youhua@codeaurora.org>
 Date: Tue, 8 Dec 2015 17:57:22 +0800
 Subject: [PATCH 08/10] Define EF MSPL/MLPL/PRL values and paths

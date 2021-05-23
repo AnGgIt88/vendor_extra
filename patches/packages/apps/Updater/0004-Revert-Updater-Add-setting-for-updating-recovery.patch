@@ -1,4 +1,4 @@
-From 663e30eaa4985696faf3fbc4de11d5b07e18ab51 Mon Sep 17 00:00:00 2001
+From 06e0707fdef9a6e22158dce3d8a29a3773935e6c Mon Sep 17 00:00:00 2001
 From: Pulkit077 <pulkitagarwal2k1@gmail.com>
 Date: Wed, 6 Jan 2021 08:29:58 +0530
 Subject: [PATCH 4/4] Revert "Updater: Add setting for updating recovery"

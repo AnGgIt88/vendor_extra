@@ -1,4 +1,4 @@
-From 85d3752b0757f47f7dc6e691733a3be2ebad15c8 Mon Sep 17 00:00:00 2001
+From 599d77cd58e55a22e6ce1c63212ab0f85b3bc188 Mon Sep 17 00:00:00 2001
 From: Danny Lin <danny@kdrag0n.dev>
 Date: Wed, 14 Apr 2021 01:37:56 -0700
 Subject: [PATCH 11/14] blur: Reduce floating-point precision for UV

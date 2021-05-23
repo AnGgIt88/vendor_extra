@@ -1,4 +1,4 @@
-From bfc19f8b630a26cfc668eaf355f1030355587a16 Mon Sep 17 00:00:00 2001
+From 5786cbbfc32d6d1080715ab4780f7957a48f42d4 Mon Sep 17 00:00:00 2001
 From: Danny Lin <danny@kdrag0n.dev>
 Date: Fri, 18 Sep 2020 09:08:19 -0700
 Subject: [PATCH 04/27] config: Enable doze mode

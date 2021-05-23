@@ -1,4 +1,4 @@
-From 64ee582893f8e51458c9030d9fc3d15cb855f3b1 Mon Sep 17 00:00:00 2001
+From dfe6b26b7852eac95d5e3c002e8f96813f78bb4c Mon Sep 17 00:00:00 2001
 From: jhenrique09 <jhenrique09.mcz@hotmail.com>
 Date: Sun, 7 Mar 2021 17:16:03 -0300
 Subject: [PATCH 20/27] fixup - [1/2] Allow using face as auth method for apps

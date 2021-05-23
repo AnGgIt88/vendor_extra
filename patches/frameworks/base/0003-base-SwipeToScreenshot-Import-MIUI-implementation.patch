@@ -1,4 +1,4 @@
-From 287d454ec3245dd62013a211103d14cf3fc47986 Mon Sep 17 00:00:00 2001
+From e486d8921dddde632aeb61d5be9ab9519ea49857 Mon Sep 17 00:00:00 2001
 From: Henrique Silva <jhenrique09.mcz@hotmail.com>
 Date: Wed, 8 May 2019 11:52:38 -0300
 Subject: [PATCH 03/27] base: SwipeToScreenshot: Import MIUI implementation

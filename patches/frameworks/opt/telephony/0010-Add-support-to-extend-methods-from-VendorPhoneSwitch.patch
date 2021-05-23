@@ -1,4 +1,4 @@
-From 1d00935cf6fe2ec4c9229c75a8398737adb8bd2d Mon Sep 17 00:00:00 2001
+From 04b167de33efdd105a306eca1ce78ed38c033224 Mon Sep 17 00:00:00 2001
 From: Susheel Nyamala <snyamala@codeaurora.org>
 Date: Tue, 9 Jun 2020 14:11:41 +0530
 Subject: [PATCH 10/10] Add support to extend methods from VendorPhoneSwitcher

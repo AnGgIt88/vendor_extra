@@ -1,4 +1,4 @@
-From 97fe688edc8efbdda5581a1bb075e8d037ad0f95 Mon Sep 17 00:00:00 2001
+From 178c25aa312a4404ae6d16076b0549c9aa4fb813 Mon Sep 17 00:00:00 2001
 From: Bruno Martins <bgcngm@gmail.com>
 Date: Thu, 30 Aug 2018 10:02:00 +0800
 Subject: [PATCH 24/27] [PARTIALLY IMPLEMENTED] power: Re-introduce custom

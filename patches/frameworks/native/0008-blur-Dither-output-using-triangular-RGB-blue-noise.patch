@@ -1,4 +1,4 @@
-From 675c5de278a7460f495d49e8206b34fd033f1263 Mon Sep 17 00:00:00 2001
+From feebc11c54e876106443511a8e729f5a3e8dc23f Mon Sep 17 00:00:00 2001
 From: Danny Lin <danny@kdrag0n.dev>
 Date: Mon, 12 Apr 2021 20:43:49 -0700
 Subject: [PATCH 08/14] blur: Dither output using triangular RGB blue noise

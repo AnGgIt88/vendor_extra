@@ -1,4 +1,4 @@
-From 0524e2ff1e501344d5c5482b3fd4b84478c454ed Mon Sep 17 00:00:00 2001
+From f6a1b8527912d540e645739896f496469ddaebbe Mon Sep 17 00:00:00 2001
 From: maxwen <max.weninger@gmail.com>
 Date: Wed, 13 Feb 2019 00:13:00 +0100
 Subject: [PATCH 13/27] SystemUI: keyguard show charging watt

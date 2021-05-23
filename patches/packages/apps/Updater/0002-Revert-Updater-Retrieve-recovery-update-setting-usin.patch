@@ -1,4 +1,4 @@
-From 945b1a669f825d982829abd1d120873ab7cbcc8a Mon Sep 17 00:00:00 2001
+From e740876be40411524938385eb556446cff0440aa Mon Sep 17 00:00:00 2001
 From: Pulkit077 <pulkitagarwal2k1@gmail.com>
 Date: Wed, 6 Jan 2021 08:29:19 +0530
 Subject: [PATCH 2/4] Revert "Updater: Retrieve recovery update setting using

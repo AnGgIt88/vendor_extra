@@ -1,4 +1,4 @@
-From 36ae441219939909edd6bcef5749ac01beb44789 Mon Sep 17 00:00:00 2001
+From d7b7cd67d6f334f9055c1854eb52d74efffe75a1 Mon Sep 17 00:00:00 2001
 From: Adithya R <gh0strider.2k18.reborn@gmail.com>
 Date: Sat, 10 Apr 2021 20:07:15 +0530
 Subject: [PATCH 04/14] inputflinger: Enable ThinLTO
